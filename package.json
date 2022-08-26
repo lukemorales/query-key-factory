@@ -1,0 +1,26 @@
+{
+  "name": "@lukemorales/query-key-factory",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "repository": "git@github.com:lukemorales/query-key-factory.git",
+  "author": "Luke Morales <lukemorales@live.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@lukemorales/eslint-config": "1.0.16",
+    "@types/jest": "^28.1.7",
+    "@typescript-eslint/eslint-plugin": "5.35.1",
+    "@typescript-eslint/parser": "5.35.1",
+    "eslint": "^8.2.0",
+    "eslint-config-airbnb-base": "15.0.0",
+    "eslint-config-prettier": "8.5.0",
+    "eslint-import-resolver-typescript": "3.5.0",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-import-helpers": "1.2.1",
+    "eslint-plugin-jest": "26.8.7",
+    "eslint-plugin-jest-formatting": "3.1.0",
+    "eslint-plugin-prettier": "4.2.1",
+    "jest": "^28.1.3",
+    "prettier": "2.7.1",
+    "typescript": "^4.7.4"
+  }
+}
