@@ -7,6 +7,14 @@ type FactoryProperty = string | number | null | boolean | FactoryCallback;
 
 export type FactoryObject = Record<string, FactoryProperty>;
 
+type ValidateSchema<Schema extends FactoryObject> = Omit<Schema, 'default'>;
+
+export type ValidateFactory<Schema extends FactoryObject> = Schema extends {
+  ['default']: Schema['default'];
+}
+  ? ValidateSchema<Schema>
+  : Schema;
+
 export type FactoryOutputCallback<Key, Property, Callback extends FactoryCallback> = {
   (...args: Parameters<Callback>): readonly [
     Key,

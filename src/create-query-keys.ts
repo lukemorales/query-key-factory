@@ -5,18 +5,19 @@ import type {
   QueryKeyFactoryResult,
   FactoryOutput,
   FactoryOutputCallback,
+  ValidateFactory,
 } from './types';
 
 export function createQueryKeys<Key extends string>(key: Key): DefaultKey<Key>;
 export function createQueryKeys<Key extends string, Factory extends FactoryObject>(
   key: Key,
-  factory: Factory,
-): QueryKeyFactoryResult<Key, Factory>;
+  factory: ValidateFactory<Factory>,
+): QueryKeyFactoryResult<Key, ValidateFactory<Factory>>;
 
 export function createQueryKeys<Key extends string, FactorySchema extends FactoryObject>(
   key: Key,
-  factory?: FactorySchema,
-): DefaultKey<Key> | QueryKeyFactoryResult<Key, FactorySchema> {
+  factory?: ValidateFactory<FactorySchema>,
+): DefaultKey<Key> | QueryKeyFactoryResult<Key, ValidateFactory<FactorySchema>> {
   if (factory == null) {
     return {
       default: [key] as const,
