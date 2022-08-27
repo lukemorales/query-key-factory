@@ -116,5 +116,15 @@
         "allowObject": true
       }
     ]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["!src/*"],
+      "rules": {
+        "import/no-extraneous-dependencies": "off",
+        "import-helpers/order-imports": "off",
+        "@typescript-eslint/no-var-requires": "off"
+      }
+    }
+  ]
 }

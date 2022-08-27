@@ -1,15 +1,28 @@
 {
   "name": "@lukemorales/query-key-factory",
   "version": "0.0.1",
-  "main": "dist/index.js",
   "repository": "git@github.com:lukemorales/query-key-factory.git",
   "author": "Luke Morales <lukemorales@live.com>",
+  "description": "A library for creating standardized query keys, useful for cache management in @tanstack/query",
   "license": "MIT",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm-run-all clean -p build:*",
+    "build:lib": "rollup -c",
+    "build:typecheck": "tsc -b",
+    "clean": "rimraf dist"
+  },
   "devDependencies": {
     "@lukemorales/eslint-config": "1.0.16",
     "@types/jest": "^28.1.7",
     "@typescript-eslint/eslint-plugin": "5.35.1",
     "@typescript-eslint/parser": "5.35.1",
+    "esbuild": "^0.15.5",
     "eslint": "^8.2.0",
     "eslint-config-airbnb-base": "15.0.0",
     "eslint-config-prettier": "8.5.0",
@@ -20,7 +33,14 @@
     "eslint-plugin-jest-formatting": "3.1.0",
     "eslint-plugin-prettier": "4.2.1",
     "jest": "^28.1.3",
+    "npm-run-all": "^4.1.5",
     "prettier": "2.7.1",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.78.1",
+    "rollup-plugin-dts": "^4.2.2",
+    "rollup-plugin-esbuild": "^4.10.1",
+    "rollup-plugin-size": "^0.2.2",
+    "rollup-plugin-terser": "^7.0.2",
     "typescript": "^4.7.4"
   }
 }
