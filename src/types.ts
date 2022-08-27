@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type AnyObject = Record<string, unknown>;
 
-export type FactoryCallback = (...args: any[]) => AnyObject;
+type FactoryCallback = (...args: any[]) => AnyObject;
 
-type FactoryProperty = string | number | null | boolean | FactoryCallback;
+export type KeyScopeValue = AnyObject | string | number | boolean;
+
+type FactoryProperty = Exclude<KeyScopeValue, AnyObject> | null | FactoryCallback;
 
 export type FactoryObject = Record<string, FactoryProperty>;
 
@@ -33,14 +35,6 @@ export type FactoryOutput<Key extends string, FactorySchema extends FactoryObjec
     ? readonly [Key, P]
     : readonly [Key, P, FactorySchema[P]];
 };
-
-export type KeyFactory<Key extends string> = <
-  Scope extends string,
-  ScopeValue extends AnyObject | string | number | boolean,
->(
-  scope: Scope,
-  scopeValue?: ScopeValue,
-) => readonly [Key, Scope] | readonly [Key, Scope, ScopeValue];
 
 export type DefaultKey<Key extends string> = Record<'default', readonly [Key]>;
 

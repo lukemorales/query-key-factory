@@ -1,81 +1,91 @@
 import type {
   DefaultKey,
-  KeyFactory,
   FactoryObject,
-  QueryKeyFactoryResult,
   FactoryOutput,
   FactoryOutputCallback,
+  KeyScopeValue,
+  QueryKeyFactoryResult,
   ValidateFactory,
 } from './types';
 
-export function createQueryKeys<Key extends string>(key: Key): DefaultKey<Key>;
-export function createQueryKeys<Key extends string, Factory extends FactoryObject>(
-  key: Key,
-  factory: ValidateFactory<Factory>,
-): QueryKeyFactoryResult<Key, ValidateFactory<Factory>>;
+export function createQueryKeys<Key extends string>(defaultKey: Key): DefaultKey<Key>;
+export function createQueryKeys<Key extends string, FactorySchema extends FactoryObject>(
+  defaultKey: Key,
+  factorySchema: ValidateFactory<FactorySchema>,
+): QueryKeyFactoryResult<Key, ValidateFactory<FactorySchema>>;
 
 export function createQueryKeys<Key extends string, FactorySchema extends FactoryObject>(
-  key: Key,
-  factory?: ValidateFactory<FactorySchema>,
+  defaultKey: Key,
+  factorySchema?: ValidateFactory<FactorySchema>,
 ): DefaultKey<Key> | QueryKeyFactoryResult<Key, ValidateFactory<FactorySchema>> {
-  if (factory == null) {
+  if (factorySchema == null) {
     return {
-      default: [key] as const,
+      default: [defaultKey] as const,
     };
   }
 
-  const factoryKeys = Object.keys(factory);
+  const schemaKeys = assertSchemaKeys(factorySchema);
 
-  assertFactoryKeys(factoryKeys);
+  function createKey<Scope extends string>(scope: Scope): readonly [Key, Scope];
+  function createKey<Scope extends string, ScopeValue extends KeyScopeValue>(
+    scope: Scope,
+    scopeValue: ScopeValue,
+  ): readonly [Key, Scope, ScopeValue];
 
-  const createKey: KeyFactory<Key> = (scope, scopeValue) => {
+  function createKey<Scope extends string, ScopeValue extends KeyScopeValue>(
+    scope: Scope,
+    scopeValue?: ScopeValue,
+  ): readonly [Key, Scope] | readonly [Key, Scope, ScopeValue] {
     if (scopeValue != null) {
-      return [key, scope, scopeValue] as const;
+      return [defaultKey, scope, scopeValue] as const;
     }
 
-    return [key, scope] as const;
-  };
+    return [defaultKey, scope] as const;
+  }
 
   type Factory = FactoryOutput<Key, FactorySchema>;
 
-  const factoryMap = factoryKeys.reduce((map, factoryKey) => {
-    const currentValue = factory[factoryKey];
+  const factory = schemaKeys.reduce((factoryMap, key) => {
+    const currentValue = factorySchema[key];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let yieldValue: any;
 
     if (typeof currentValue === 'function') {
-      type ResultCallback = FactoryOutputCallback<Key, typeof factoryKey, typeof currentValue>;
+      type ResultCallback = FactoryOutputCallback<Key, typeof key, typeof currentValue>;
 
       const resultCallback: ResultCallback = (...args) => {
         const result = currentValue(...args);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return createKey(factoryKey, result) as any;
+        return createKey(key, result);
       };
 
-      resultCallback.toScope = () => [key, factoryKey] as const;
+      resultCallback.toScope = () => [defaultKey, key] as const;
 
       yieldValue = resultCallback;
+    } else if (currentValue != null) {
+      yieldValue = createKey(key, currentValue);
     } else {
-      yieldValue = createKey(factoryKey, currentValue ?? undefined);
+      yieldValue = createKey(key);
     }
 
-    map.set(factoryKey, yieldValue);
+    factoryMap.set(key, yieldValue);
 
-    return map;
+    return factoryMap;
   }, new Map<keyof Factory, Factory[keyof Factory]>());
 
   return {
-    default: [key] as const,
-    ...Object.fromEntries(factoryMap),
+    default: [defaultKey] as const,
+    ...Object.fromEntries(factory),
   };
 }
 
-export const assertFactoryKeys = (keys: string[]): void => {
-  const keysSet = new Set(keys);
+const assertSchemaKeys = (schema: Record<string, unknown>): string[] => {
+  const schemaKeys = new Set(Object.keys(schema));
 
-  if (keysSet.has('default')) {
+  if (schemaKeys.has('default')) {
     throw new Error(`"default" is a key reserved for the "createQueryKeys" function`);
   }
+
+  return Array.from(schemaKeys);
 };
