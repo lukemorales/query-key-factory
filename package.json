@@ -2,20 +2,29 @@
   "name": "@lukemorales/query-key-factory",
   "version": "0.0.1",
   "repository": "git@github.com:lukemorales/query-key-factory.git",
+  "bugs": "https://github.com/lukemorales/query-key-factory/issues",
   "author": "Luke Morales <lukemorales@live.com>",
   "description": "A library for creating standardized query keys, useful for cache management in @tanstack/query",
   "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "typings": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
-    "build": "npm-run-all clean -p build:*",
-    "build:lib": "rollup -c",
-    "build:typecheck": "tsc -b",
-    "clean": "rimraf dist"
+    "prebuild": "$npm_execpath clean",
+    "build": "run-p build:*",
+    "build:rollup": "rollup -c",
+    "clean": "rimraf dist",
+    "lint": "run-p lint:*",
+    "lint:eslint": "eslint src --ext .ts",
+    "lint:eslint:fix": "$npm_execpath lint:eslint --fix",
+    "lint:prettier": "prettier --check \"src/**/*.ts\"",
+    "lint:prettier:fix": "$npm_execpath lint:prettier --write",
+    "lint:tsc": "tsc --project tsconfig.json --noEmit",
+    "test": "vitest --passWithNoTests",
+    "test:ci": "$npm_execpath test:coverage --run",
+    "test:coverage": "$npm_execpath test --coverage",
+    "test:ui": "$npm_execpath test:coverage --ui"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "5.35.1",
@@ -42,5 +51,14 @@
     "rollup-plugin-terser": "^7.0.2",
     "typescript": "^4.7.4",
     "vitest": "^0.22.1"
-  }
+  },
+  "keywords": [
+    "react",
+    "react-query",
+    "tanstack",
+    "tanstack-query",
+    "cache",
+    "query",
+    "query-keys"
+  ]
 }
