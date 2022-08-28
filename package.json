@@ -1,6 +1,6 @@
 {
   "name": "@lukemorales/query-key-factory",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/lukemorales/query-key-factory.git"
@@ -70,7 +70,9 @@
     "vitest": "^0.22.1"
   },
   "lint-staged": {
-    "*.ts": ["eslint src --ext .ts"]
+    "*.ts": [
+      "eslint src --ext .ts"
+    ]
   },
   "engines": {
     "node": "^14 || ^16",
