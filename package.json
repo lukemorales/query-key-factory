@@ -2,14 +2,18 @@
   "name": "@lukemorales/query-key-factory",
   "version": "0.0.1",
   "repository": "git@github.com:lukemorales/query-key-factory.git",
-  "bugs": "https://github.com/lukemorales/query-key-factory/issues",
+  "bugs": {
+    "url": "https://github.com/lukemorales/query-key-factory/issues"
+  },
   "author": "Luke Morales <lukemorales@live.com>",
   "description": "A library for creating standardized query keys, useful for cache management in @tanstack/query",
   "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "typings": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "prebuild": "$npm_execpath clean",
     "build": "run-p build:*",
@@ -24,9 +28,12 @@
     "test": "vitest --passWithNoTests",
     "test:ci": "$npm_execpath test:coverage --run",
     "test:coverage": "$npm_execpath test --coverage",
-    "test:ui": "$npm_execpath test:coverage --ui"
+    "test:ui": "$npm_execpath test:coverage --ui",
+    "prepare": "is-ci || husky install"
   },
   "devDependencies": {
+    "@commitlint/cli": "^17.1.1",
+    "@commitlint/config-conventional": "^17.1.0",
     "@typescript-eslint/eslint-plugin": "5.35.1",
     "@typescript-eslint/parser": "5.35.1",
     "@vitest/coverage-c8": "^0.22.1",
@@ -41,6 +48,9 @@
     "eslint-plugin-jest": "26.8.7",
     "eslint-plugin-jest-formatting": "3.1.0",
     "eslint-plugin-prettier": "4.2.1",
+    "husky": "^8.0.0",
+    "is-ci": "^3.0.1",
+    "lint-staged": "^13.0.3",
     "npm-run-all": "^4.1.5",
     "prettier": "2.7.1",
     "rimraf": "^3.0.2",
@@ -49,8 +59,12 @@
     "rollup-plugin-esbuild": "^4.10.1",
     "rollup-plugin-size": "^0.2.2",
     "rollup-plugin-terser": "^7.0.2",
+    "ts-node": "^10.9.1",
     "typescript": "^4.7.4",
     "vitest": "^0.22.1"
+  },
+  "lint-staged": {
+    "*.ts": "lint"
   },
   "keywords": [
     "react",
