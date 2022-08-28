@@ -70,7 +70,7 @@
     "vitest": "^0.22.1"
   },
   "lint-staged": {
-    "*.ts": "lint"
+    "*.ts": ["eslint src --ext .ts"]
   },
   "engines": {
     "node": "^14",
