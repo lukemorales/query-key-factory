@@ -73,7 +73,7 @@
     "*.ts": ["eslint src --ext .ts"]
   },
   "engines": {
-    "node": "^14",
+    "node": "^14 || ^16",
     "npm": "please-use-yarn",
     "yarn": "^1"
   },
