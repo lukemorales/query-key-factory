@@ -29,6 +29,9 @@
   "settings": {
     "import/resolver": {
       "typescript": {}
+    },
+    "jest": {
+      "version": 29
     }
   },
   "rules": {
