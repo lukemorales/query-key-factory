@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  pull_request:
+    branches: ["*"]
+
+jobs:
+  install-deps:
+    runs-on: ubuntu-latest
+    name: Install dependencies 🔧
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - uses: actions/cache@v3
+        id: yarn-cache
+        with:
+          path: "**/node_modules"
+          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Setup Node and install project dependencies
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+          check-latest: true
+          cache: 'yarn'
+
+        if: steps.yarn-cache.outputs.cache-hit != 'true'
+      - run: yarn install --frozen-lockfile
+
+  lint:
+    runs-on: ubuntu-latest
+    name: Check for errors 🚨
+    needs: install-deps
+    steps:
+      - uses: actions/checkout@v3
+      - name: Load node_modules
+        uses: actions/cache@v3
+        with:
+          path: "**/node_modules"
+          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Restore ESLint Cache
+        uses: actions/cache@v3
+        id: eslint-cache
+        with:
+          path: .eslintcache
+          key: ${{ matrix.os }}-eslint-${{ hashFiles('**/*.ts', 'package.json', 'tsconfig.json') }}
+
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+          check-latest: true
+          cache: 'yarn'
+      - run: yarn lint
+
+  lint-pr:
+    runs-on: ubuntu-latest
+    name: Lint the Pull Request Title 🚨
+    needs: install-deps
+    steps:
+      - uses: amannn/action-semantic-pull-request@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
