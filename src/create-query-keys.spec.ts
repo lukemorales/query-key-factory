@@ -46,7 +46,7 @@ describe('createQueryKeys', () => {
           default: 'trying to override the default key value',
           settings: 'admin',
         }),
-      ).toThrow();
+      ).toThrow('"default" is a key reserved for the "createQueryKeys" function');
     });
 
     describe('when the schema property is not a function', () => {
@@ -77,32 +77,66 @@ describe('createQueryKeys', () => {
     });
 
     describe('when the schema property is a function', () => {
-      it('creates a function that returns a formatted query key', () => {
-        const queryKeys = createQueryKeys('master-key', {
-          search: (query: string, maxResults: number) => ({ query, maxResults }),
+      describe('when the function returns a primitive', () => {
+        it('creates a callback that returns a formatted query key', () => {
+          const queryKeys = createQueryKeys('master-key', {
+            todo: (id: string) => id,
+          });
+
+          expect(typeof queryKeys.todo).toBe('function');
+
+          const generatedKey = queryKeys.todo('todo-id');
+
+          expect(Array.isArray(generatedKey)).toBeTruthy();
+          expect(generatedKey).toHaveLength(3);
+          expect(generatedKey).toStrictEqual(['master-key', 'todo', 'todo-id']);
         });
+      });
 
-        expect(typeof queryKeys.search).toBe('function');
+      describe('when the function returns an object', () => {
+        it('creates a callback that returns a formatted query key', () => {
+          const queryKeys = createQueryKeys('master-key', {
+            todo: (id: string, preview: boolean) => ({ id, preview }),
+          });
 
-        const generatedKey = queryKeys.search('tanstack', 5);
+          expect(typeof queryKeys.todo).toBe('function');
 
-        expect(Array.isArray(generatedKey)).toBeTruthy();
-        expect(generatedKey).toHaveLength(3);
-        expect(generatedKey).toStrictEqual(['master-key', 'search', { query: 'tanstack', maxResults: 5 }]);
+          const generatedKey = queryKeys.todo('todo-id', true);
+
+          expect(Array.isArray(generatedKey)).toBeTruthy();
+          expect(generatedKey).toHaveLength(3);
+          expect(generatedKey).toStrictEqual(['master-key', 'todo', { id: 'todo-id', preview: true }]);
+        });
+      });
+
+      describe('when the function returns a tuple', () => {
+        it('creates a function that returns a formatted query key when the result is an array', () => {
+          const queryKeys = createQueryKeys('master-key', {
+            todoWithPreview: <Id extends string>(id: Id, preview: boolean) => [id, { preview }],
+          });
+
+          expect(typeof queryKeys.todoWithPreview).toBe('function');
+
+          const generatedKey = queryKeys.todoWithPreview('todo-id', false);
+
+          expect(Array.isArray(generatedKey)).toBeTruthy();
+          expect(generatedKey).toHaveLength(4);
+          expect(generatedKey).toStrictEqual(['master-key', 'todoWithPreview', 'todo-id', { preview: false }]);
+        });
       });
 
       it('exposes a "toScope" function that returns an array in the shape [default-key, schema-key]', () => {
         const queryKeys = createQueryKeys('master-key', {
-          search: (query: string, maxResults: number) => ({ query, maxResults }),
+          todo: (id: string) => id,
         });
 
-        expect(queryKeys.search).toHaveProperty('toScope');
-        expect(typeof queryKeys.search.toScope).toBe('function');
+        expect(queryKeys.todo).toHaveProperty('toScope');
+        expect(typeof queryKeys.todo.toScope).toBe('function');
 
-        const generatedScopeKey = queryKeys.search.toScope();
+        const generatedScopeKey = queryKeys.todo.toScope();
 
         expect(generatedScopeKey).toHaveLength(2);
-        expect(generatedScopeKey).toStrictEqual(['master-key', 'search']);
+        expect(generatedScopeKey).toStrictEqual(['master-key', 'todo']);
       });
     });
   });
