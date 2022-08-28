@@ -39,7 +39,7 @@ export const usersKeys = createQueryKeys('users');
 
 export const productsKeys = createQueryKeys('products', {
   bestSelling: null,
-  search: (query: string, limit = 15) => ({ query, limit })
+  search: (query: string, limit = 15) => ({ query, limit }),
   byId: (productId: string) => ({ productId }),
 });
 ```
@@ -108,14 +108,14 @@ Easy way to access the serializable key scope and invalidade all cache for that 
 ```ts
 const todosKeys = createQueryKeys('todos', {
   single: (id: string) => id,
-  tag: (tagId: string) => ({ tagId })
+  tag: (tagId: string) => ({ tagId }),
   search: (query: string, limit: number) => [query, { limit }],
 });
 
 
 todosKeys.single('todo_id'); // ['todos', 'single', 'todo_id']
 todosKeys.tag('tag_homework'); // ['todos', 'tag', { tagId: 'tag_homework' }]
-todosKeys.search('learn tanstack query', 15); // ['todos', 'single', 'learn tanstack query', { limit: 15 }]
+todosKeys.search('learn tanstack query', 15); // ['todos', 'search', 'learn tanstack query', { limit: 15 }]
 
 todosKeys.single.toScope(); // ['todos', 'single']
 todosKeys.tag.toScope(); // ['todos', 'tag']
