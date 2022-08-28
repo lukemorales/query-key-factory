@@ -91,7 +91,7 @@ All keys generated follow the @tanstack/query recommendation of being an [array 
 const todosKeys = createQueryKeys('todos', {
   done: null,
   preview: true,
-  single: (id: string) => ({ id }),
+  single: (id: string) => id,
 });
 
 // shape of createQueryKeys output
@@ -99,7 +99,7 @@ todosKeys = {
   default: ['todos'],
   done: ['todos', 'done'],
   preview: ['todos', 'preview', true],
-  single: ('todo_id') => ['todos', 'single', { id: 'todo_id' }]
+  single: ('todo_id') => ['todos', 'single', 'todo_id'],
 }
 ```
 
@@ -107,9 +107,17 @@ todosKeys = {
 Easy way to access the serializable key scope and invalidade all cache for that context:
 ```ts
 const todosKeys = createQueryKeys('todos', {
-  single: (id: string) => ({ id }),
+  single: (id: string) => id,
+  tag: (tagId: string) => ({ tagId })
+  search: (query: string, limit: number) => [query, { limit }],
 });
 
-todosKeys.single('todo_id'); // ['todos', 'single', { id: 'todo_id' }]
+
+todosKeys.single('todo_id'); // ['todos', 'single', 'todo_id']
+todosKeys.tag('tag_homework'); // ['todos', 'tag', { tagId: 'tag_homework' }]
+todosKeys.search('learn tanstack query', 15); // ['todos', 'single', 'learn tanstack query', { limit: 15 }]
+
 todosKeys.single.toScope(); // ['todos', 'single']
+todosKeys.tag.toScope(); // ['todos', 'tag']
+todosKeys.search.toScope(); // ['todos', 'search']
 ```

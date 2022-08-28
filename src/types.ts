@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type AnyObject = Record<string, unknown>;
 
-type FactoryCallback = (...args: any[]) => AnyObject;
+type FactoryCallback = (...args: any[]) => KeyScopeValue | [string | number, KeyScopeValue];
 
-export type KeyScopeValue = AnyObject | string | number | boolean;
+export type KeyScopeValue = string | number | boolean | AnyObject;
 
 type FactoryProperty = Exclude<KeyScopeValue, AnyObject> | null | FactoryCallback;
 
@@ -18,13 +18,17 @@ export type ValidateFactory<Schema extends FactoryObject> = Schema extends {
   : Schema;
 
 export type FactoryOutputCallback<Key, Property, Callback extends FactoryCallback> = {
-  (...args: Parameters<Callback>): readonly [
-    Key,
-    Property,
-    {
-      [SubKey in keyof ReturnType<Callback>]: ReturnType<Callback>[SubKey];
-    },
-  ];
+  (...args: Parameters<Callback>): ReturnType<Callback> extends [infer ScopeValue, infer DeeperScopeValue]
+    ? readonly [Key, Property, ScopeValue, DeeperScopeValue]
+    : ReturnType<Callback> extends AnyObject
+    ? readonly [
+        Key,
+        Property,
+        {
+          [SubKey in keyof ReturnType<Callback>]: ReturnType<Callback>[SubKey];
+        },
+      ]
+    : readonly [Key, Property, ReturnType<Callback>];
   toScope: () => readonly [Key, Property];
 };
 
