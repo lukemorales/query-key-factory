@@ -1,5 +1,11 @@
 # @lukemorales/query-key-factory
 
+## 0.3.0
+
+### Minor Changes
+
+- Allow tuples of any size in dynamic keys
+
 ## 0.2.1
 
 ### Patch Changes
