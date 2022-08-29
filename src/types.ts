@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type AnyObject = Record<string, unknown>;
 
-type FactoryCallback = (...args: any[]) => KeyScopeValue | [string | number, KeyScopeValue];
+export type KeyScopeTuple = [KeyScopeValue | undefined, ...Array<KeyScopeValue | undefined>];
+
+type FactoryCallback = (...args: any[]) => KeyScopeValue | KeyScopeTuple;
 
 export type KeyScopeValue = string | number | boolean | AnyObject;
 
@@ -17,18 +19,23 @@ export type ValidateFactory<Schema extends FactoryObject> = Schema extends {
   ? ValidateSchema<Schema>
   : Schema;
 
-export type FactoryOutputCallback<Key, Property, Callback extends FactoryCallback> = {
-  (...args: Parameters<Callback>): ReturnType<Callback> extends [infer ScopeValue, infer DeeperScopeValue]
-    ? readonly [Key, Property, ScopeValue, DeeperScopeValue]
-    : ReturnType<Callback> extends AnyObject
+export type FactoryOutputCallback<
+  Key,
+  Property,
+  Callback extends FactoryCallback,
+  CallbackResult extends ReturnType<Callback> = ReturnType<Callback>,
+> = {
+  (...args: Parameters<Callback>): CallbackResult extends [...infer TupleResult]
+    ? readonly [Key, Property, ...TupleResult]
+    : CallbackResult extends AnyObject
     ? readonly [
         Key,
         Property,
         {
-          [SubKey in keyof ReturnType<Callback>]: ReturnType<Callback>[SubKey];
+          [SubKey in keyof CallbackResult]: CallbackResult[SubKey];
         },
       ]
-    : readonly [Key, Property, ReturnType<Callback>];
+    : readonly [Key, Property, CallbackResult];
   toScope: () => readonly [Key, Property];
 };
 

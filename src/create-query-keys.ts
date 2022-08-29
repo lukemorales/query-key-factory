@@ -3,6 +3,7 @@ import type {
   FactoryObject,
   FactoryOutput,
   FactoryOutputCallback,
+  KeyScopeTuple,
   KeyScopeValue,
   QueryKeyFactoryResult,
   ValidateFactory,
@@ -31,20 +32,18 @@ export function createQueryKeys<Key extends string, FactorySchema extends Factor
     scope: Scope,
     scopeValue: ScopeValue,
   ): readonly [Key, Scope, ScopeValue];
-  function createKey<Scope extends string, ScopeValue extends string | number, DeeperScopeValue extends KeyScopeValue>(
+  function createKey<Scope extends string, ScopeValue extends KeyScopeTuple>(
     scope: Scope,
     scopeValue: ScopeValue,
-    deeperScopeValue: DeeperScopeValue,
-  ): readonly [Key, Scope, ScopeValue, DeeperScopeValue];
+  ): readonly [Key, Scope, ...ScopeValue];
 
-  function createKey<Scope extends string, ScopeValue extends KeyScopeValue, DeeperScopeValue extends KeyScopeValue>(
+  function createKey<Scope extends string, ScopeValue extends KeyScopeValue | KeyScopeTuple>(
     scope: Scope,
     scopeValue?: ScopeValue,
-    deeperScopeValue?: DeeperScopeValue,
-  ): readonly [Key, Scope] | readonly [Key, Scope, ScopeValue] | readonly [Key, Scope, ScopeValue, DeeperScopeValue] {
+  ): readonly [Key, Scope] | readonly [Key, Scope, ScopeValue] | readonly [Key, Scope, ...KeyScopeTuple[]] {
     if (scopeValue != null) {
-      if (deeperScopeValue != null) {
-        return [defaultKey, scope, scopeValue, deeperScopeValue] as const;
+      if (Array.isArray(scopeValue)) {
+        return [defaultKey, scope, ...scopeValue] as const;
       }
 
       return [defaultKey, scope, scopeValue] as const;
@@ -62,14 +61,14 @@ export function createQueryKeys<Key extends string, FactorySchema extends Factor
     let yieldValue: any;
 
     if (typeof currentValue === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      type ResultCallback = FactoryOutputCallback<Key, typeof key, any>;
+      type ResultCallback = FactoryOutputCallback<Key, typeof key, typeof currentValue>;
 
       const resultCallback: ResultCallback = (...args) => {
         const result = currentValue(...args);
 
+        // necessary for correct createKey overload to be called
         if (Array.isArray(result)) {
-          return createKey(key, result[0], result[1]);
+          return createKey(key, result);
         }
 
         return createKey(key, result);
