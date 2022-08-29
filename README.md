@@ -61,7 +61,8 @@ const ProductList: FC = () => {
 
   useEffect(() => {
     if (search === '') {
-      queryClient.invalidateQueries(productKeys.search.toScope()); // invalidate cache only for the search scope
+      queryClient.invalidateQueries(productKeys.search.toScope());
+      // invalidate cache only for the search scope
     }
   }, [search]);
 
@@ -73,7 +74,8 @@ const Product: FC = () => {
   const product = useQuery(productsKeys.byId(productId), fetchProduct);
 
   const onAddToCart = () => {
-    queryClient.invalidateQueries(productsKeys.default); // invalidade cache for entire feature
+    queryClient.invalidateQueries(productsKeys.default);
+    // invalidade cache for entire feature
   }
 
   return <div> {/* render product page */} </div>;
@@ -110,12 +112,18 @@ const todosKeys = createQueryKeys('todos', {
   single: (id: string) => id,
   tag: (tagId: string) => ({ tagId }),
   search: (query: string, limit: number) => [query, { limit }],
+  filter: ({ filter, status, limit }: FilterOptions) => [filter, status, limit],
 });
 
 
-todosKeys.single('todo_id'); // ['todos', 'single', 'todo_id']
-todosKeys.tag('tag_homework'); // ['todos', 'tag', { tagId: 'tag_homework' }]
-todosKeys.search('learn tanstack query', 15); // ['todos', 'search', 'learn tanstack query', { limit: 15 }]
+todosKeys.single('todo_id');
+// ['todos', 'single', 'todo_id']
+todosKeys.tag('tag_homework');
+// ['todos', 'tag', { tagId: 'tag_homework' }]
+todosKeys.search('learn tanstack query', 15);
+// ['todos', 'search', 'learn tanstack query', { limit: 15 }]
+todosKeys.filter('not-owned-by-me', 'done', 15);
+// ['todos', 'filter', 'not-owned-by-me', 'done', 15]
 
 todosKeys.single.toScope(); // ['todos', 'single']
 todosKeys.tag.toScope(); // ['todos', 'tag']
