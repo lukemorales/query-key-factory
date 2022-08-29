@@ -110,18 +110,53 @@ describe('createQueryKeys', () => {
       });
 
       describe('when the function returns a tuple', () => {
+        type TodoStatus = 'done' | 'ongoing';
+
+        type Test = {
+          id: string;
+          preview: boolean;
+          status: TodoStatus;
+          tasksPerPage: number;
+        };
+
         it('creates a function that returns a formatted query key when the result is an array', () => {
           const queryKeys = createQueryKeys('master-key', {
-            todoWithPreview: <Id extends string>(id: Id, preview: boolean) => [id, { preview }],
+            todoKeyWithTuple: ({ id, preview, status, tasksPerPage }: Test) => [id, preview, status, tasksPerPage],
+            todoKeyWithRecord: (id: string, preview: boolean) => [id, { preview }],
           });
 
-          expect(typeof queryKeys.todoWithPreview).toBe('function');
+          expect(typeof queryKeys.todoKeyWithTuple).toBe('function');
+          expect(typeof queryKeys.todoKeyWithRecord).toBe('function');
 
-          const generatedKey = queryKeys.todoWithPreview('todo-id', false);
+          const generatedKeyWithTuple = queryKeys.todoKeyWithTuple({
+            //  ^?
+            id: 'ongoing-todo-id',
+            preview: true,
+            status: 'ongoing',
+            tasksPerPage: 3,
+          });
+          const generatedKeyWithRecord = queryKeys.todoKeyWithRecord('todo-id', false);
+          //    ^?
 
-          expect(Array.isArray(generatedKey)).toBeTruthy();
-          expect(generatedKey).toHaveLength(4);
-          expect(generatedKey).toStrictEqual(['master-key', 'todoWithPreview', 'todo-id', { preview: false }]);
+          expect(Array.isArray(generatedKeyWithTuple)).toBeTruthy();
+          expect(generatedKeyWithTuple).toHaveLength(6);
+          expect(generatedKeyWithTuple).toStrictEqual([
+            'master-key',
+            'todoKeyWithTuple',
+            'ongoing-todo-id',
+            true,
+            'ongoing',
+            3,
+          ]);
+
+          expect(Array.isArray(generatedKeyWithRecord)).toBeTruthy();
+          expect(generatedKeyWithRecord).toHaveLength(4);
+          expect(generatedKeyWithRecord).toStrictEqual([
+            'master-key',
+            'todoKeyWithRecord',
+            'todo-id',
+            { preview: false },
+          ]);
         });
       });
 
