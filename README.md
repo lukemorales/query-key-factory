@@ -122,7 +122,7 @@ todosKeys.tag('tag_homework');
 // ['todos', 'tag', { tagId: 'tag_homework' }]
 todosKeys.search('learn tanstack query', 15);
 // ['todos', 'search', 'learn tanstack query', { limit: 15 }]
-todosKeys.filter('not-owned-by-me', 'done', 15);
+todosKeys.filter({ filter: 'not-owned-by-me', status: 'done', limit: 15 });
 // ['todos', 'filter', 'not-owned-by-me', 'done', 15]
 
 todosKeys.single.toScope(); // ['todos', 'single']
