@@ -129,3 +129,27 @@ todosKeys.single.toScope(); // ['todos', 'single']
 todosKeys.tag.toScope(); // ['todos', 'tag']
 todosKeys.search.toScope(); // ['todos', 'search']
 ```
+
+### Type your QueryFunctionContext
+Get types of your query keys passed to the queryFn
+```ts
+import { createQueryKeys, inferQueryKeys } from "@lukemorales/query-key-factory"
+
+const todosKeys = createQueryKeys('todos', {
+  single: (id: string) => id,
+  tag: (tagId: string) => ({ tagId }),
+  search: (query: string, limit: number) => [query, { limit }],
+  filter: ({ filter, status, limit }: FilterOptions) => [filter, status, limit],
+});
+
+type TodoKeys = inferQueryKeys<typeof todosKeys>
+
+const fetchTodosByTag = (context: QueryFunctionContext<TodoKeys['tag']>) => {
+  const queryKey = context.queryKey // readonly ['todos', 'tag', { tagId: string }] 
+
+  // fetch todos...
+}
+
+useQuery(todosKeys.tag('tag_homework'), fetchTodosByTag)
+```
+
