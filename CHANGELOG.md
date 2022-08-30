@@ -1,5 +1,11 @@
 # @lukemorales/query-key-factory
 
+## 0.3.2
+
+### Patch Changes
+
+- Add `inferQueryKeys` type to create interface from result of `createQueryKeys`
+
 ## 0.3.1
 
 ### Patch Changes
