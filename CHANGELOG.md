@@ -1,5 +1,11 @@
 # @lukemorales/query-key-factory
 
+## 0.3.1
+
+### Patch Changes
+
+- Fix new types not published
+
 ## 0.3.0
 
 ### Minor Changes
