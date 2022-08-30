@@ -61,8 +61,8 @@ const ProductList: FC = () => {
 
   useEffect(() => {
     if (search === '') {
-      queryClient.invalidateQueries(productKeys.search.toScope());
       // invalidate cache only for the search scope
+      queryClient.invalidateQueries(productKeys.search.toScope());
     }
   }, [search]);
 
@@ -74,8 +74,8 @@ const Product: FC = () => {
   const product = useQuery(productsKeys.byId(productId), fetchProduct);
 
   const onAddToCart = () => {
-    queryClient.invalidateQueries(productsKeys.default);
     // invalidade cache for entire feature
+    queryClient.invalidateQueries(productsKeys.default);
   }
 
   return <div> {/* render product page */} </div>;
