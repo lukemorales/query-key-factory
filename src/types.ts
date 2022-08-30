@@ -51,3 +51,9 @@ export type DefaultKey<Key extends string> = Record<'default', readonly [Key]>;
 
 export type QueryKeyFactoryResult<Key extends string, FactorySchema extends FactoryObject> = DefaultKey<Key> &
   FactoryOutput<Key, FactorySchema>;
+
+export type inferQueryKeys<FactorySchema> = {
+  [K in keyof FactorySchema]: FactorySchema[K] extends (...args: Array<any>) => ReadonlyArray<unknown>
+    ? ReturnType<FactorySchema[K]>
+    : FactorySchema[K];
+};
