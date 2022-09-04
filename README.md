@@ -102,7 +102,7 @@ todosKeys = {
   done: ['todos', 'done'],
   preview: ['todos', 'preview', true],
   single: ('todo_id') => ['todos', 'single', 'todo_id'],
-}
+};
 ```
 
 ### Access to serializable keys scoped form
@@ -130,8 +130,42 @@ todosKeys.tag.toScope(); // ['todos', 'tag']
 todosKeys.search.toScope(); // ['todos', 'search']
 ```
 
-### Type your QueryFunctionContext
-Get types of your query keys passed to the queryFn
+### Create a single point of access for all your query keys
+Have fine-grained control over your features' keys and merge them into a single object to have access to all your query keys in your codebase:
+
+```ts
+const usersKeys = createQueryKeys('users', {
+  byId: (id: string) => id,
+});
+
+const todosKeys = createQueryKeys('todos', {
+  done: null,
+  preview: true,
+  single: (id: string) => id,
+});
+
+
+export const keysStore = mergeQueryKeys(usersKeys, todosKeys);
+export type KeysStore = inferMergedFactory<typeof keysStore>;
+
+// shape of mergeQueryKeys output
+keysStore = {
+  users: {
+    default: ['users'],
+    byId: (id: string) => id,
+  },
+  todos: {
+    default: ['todos'],
+    done: ['todos', 'done'],
+    preview: ['todos', 'preview', true],
+    single: (id: string) => id,
+  },
+};
+```
+
+### Type your QueryFunctionContext with ease
+Get accurate types of your query keys passed to the `queryFn` context:
+
 ```ts
 import { createQueryKeys, inferQueryKeys } from "@lukemorales/query-key-factory"
 
@@ -145,11 +179,10 @@ const todosKeys = createQueryKeys('todos', {
 type TodoKeys = inferQueryKeys<typeof todosKeys>
 
 const fetchTodosByTag = (context: QueryFunctionContext<TodoKeys['tag']>) => {
-  const queryKey = context.queryKey // readonly ['todos', 'tag', { tagId: string }] 
+  const queryKey = context.queryKey // readonly ['todos', 'tag', { tagId: string }]
 
   // fetch todos...
 }
 
 useQuery(todosKeys.tag('tag_homework'), fetchTodosByTag)
 ```
-
