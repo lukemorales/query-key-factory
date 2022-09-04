@@ -1,5 +1,11 @@
 # @lukemorales/query-key-factory
 
+## 0.4.0
+
+### Minor Changes
+
+- Create `mergeQueryKeys` to create single access point to all query keys
+
 ## 0.3.2
 
 ### Patch Changes
