@@ -59,6 +59,15 @@
     }],
     "no-shadow": "off",
     "prefer-template": "error",
+    "@typescript-eslint/ban-types": [
+      "error",
+      {
+        "types": {
+          "{}": false
+        },
+        "extendDefaults": true
+      }
+    ],
     "@typescript-eslint/camelcase": "off",
     "@typescript-eslint/no-useless-constructor": "error",
     "@typescript-eslint/indent": "off",
