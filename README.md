@@ -33,22 +33,40 @@ npm install @lukemorales/query-key-factory
 ## ⚡ Quick start
 Start by defining the query keys for the features of your app:
 ```ts
-import { createQueryKeys } from "@lukemorales/query-key-factory"
+import { createQueryKeyStore, createQueryKeys, mergeQueryKeys } from "@lukemorales/query-key-factory";
 
+// if your prefer to declare everything in one file
+export const queryKeys = createQueryKeyStore({
+  users: null,
+  products: {
+    bestSelling: null,
+    search: (query: string, limit = 15) => ({ query, limit }),
+    byId: (productId: string) => ({ productId }),
+  },
+});
+
+// if you prefer to split your code by features
+
+// query-key-store/users.ts
 export const usersKeys = createQueryKeys('users');
 
+// query-key-store/products.ts
 export const productsKeys = createQueryKeys('products', {
   bestSelling: null,
   search: (query: string, limit = 15) => ({ query, limit }),
   byId: (productId: string) => ({ productId }),
 });
+
+// query-key-store/index.ts
+export const queryKeys = mergeQueryKeys(usersKeys, productsKeys);
 ```
+
 Use throughout your codebase as the single source for writing the query keys for your cache management:
 ```tsx
-import { usersKeys, productsKeys } from '../query-keys';
+import { queryKeys } from '../query-key-store';
 
 const UserList: FC = () => {
-  const users = useQuery(usersKeys.default, fetchUsers);
+  const users = useQuery(queryKeys.users.default, fetchUsers);
 
   return <div> {/* render product page */} </div>;
 };
@@ -57,12 +75,12 @@ const ProductList: FC = () => {
   const [search, setSeach] = useState('');
   const [productsPerPage, setProductsPerPage] = useState(15);
 
-  const products = useQuery(productsKeys.search(search, productsPerPage), fetchProducts);
+  const products = useQuery(queryKeys.products.search(search, productsPerPage), fetchProducts);
 
   useEffect(() => {
     if (search === '') {
       // invalidate cache only for the search scope
-      queryClient.invalidateQueries(productKeys.search.toScope());
+      queryClient.invalidateQueries(queryKeys.products.search.toScope());
     }
   }, [search]);
 
@@ -71,11 +89,11 @@ const ProductList: FC = () => {
 
 const Product: FC = () => {
   const { productId } = useParams();
-  const product = useQuery(productsKeys.byId(productId), fetchProduct);
+  const product = useQuery(queryKeys.products.byId(productId), fetchProduct);
 
   const onAddToCart = () => {
     // invalidade cache for entire feature
-    queryClient.invalidateQueries(productsKeys.default);
+    queryClient.invalidateQueries(queryKeys.products.default);
   }
 
   return <div> {/* render product page */} </div>;
@@ -118,12 +136,16 @@ const todosKeys = createQueryKeys('todos', {
 
 todosKeys.single('todo_id');
 // ['todos', 'single', 'todo_id']
+
 todosKeys.tag('tag_homework');
 // ['todos', 'tag', { tagId: 'tag_homework' }]
+
 todosKeys.search('learn tanstack query', 15);
 // ['todos', 'search', 'learn tanstack query', { limit: 15 }]
+
 todosKeys.filter({ filter: 'not-owned-by-me', status: 'done', limit: 15 });
 // ['todos', 'filter', 'not-owned-by-me', 'done', 15]
+
 
 todosKeys.single.toScope(); // ['todos', 'single']
 todosKeys.tag.toScope(); // ['todos', 'tag']
@@ -131,12 +153,40 @@ todosKeys.search.toScope(); // ['todos', 'search']
 ```
 
 ### Create a single point of access for all your query keys
+
+#### Declare your query keys store in one place
+Just one file to edit and maintain your store:
+```ts
+export const queryKeys = createQueryKeyStore({
+  users: null,
+  todos: {
+    done: null,
+    preview: true,
+    single: (id: string) => id,
+  },
+});
+
+export type QueryKeys = inferQueryKeyStore<typeof queryKeys>;
+
+// shape of createQueryKeyStore output
+queryKeys = {
+  users: {
+    default: ['users'],
+  },
+  todos: {
+    default: ['todos'],
+    done: ['todos', 'done'],
+    preview: ['todos', 'preview', true],
+    single: (id: string) => id,
+  },
+};
+```
+
+#### Declare your query keys by feature
 Have fine-grained control over your features' keys and merge them into a single object to have access to all your query keys in your codebase:
 
 ```ts
-const usersKeys = createQueryKeys('users', {
-  byId: (id: string) => id,
-});
+const usersKeys = createQueryKeys('users');
 
 const todosKeys = createQueryKeys('todos', {
   done: null,
@@ -144,15 +194,13 @@ const todosKeys = createQueryKeys('todos', {
   single: (id: string) => id,
 });
 
-
-export const keysStore = mergeQueryKeys(usersKeys, todosKeys);
-export type KeysStore = inferMergedFactory<typeof keysStore>;
+export const queryKeys = mergeQueryKeys(usersKeys, todosKeys);
+export type QueryKeys = inferMergedStore<typeof queryKeys>;
 
 // shape of mergeQueryKeys output
-keysStore = {
+queryKeys = {
   users: {
     default: ['users'],
-    byId: (id: string) => id,
   },
   todos: {
     default: ['todos'],
