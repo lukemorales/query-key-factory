@@ -1,8 +1,8 @@
-import { AnyFactoryOutput, FactoryFromMergedQueryKeys } from './types';
+import { AnyQueryKeyFactoryResult, StoreFromMergedQueryKeys } from './types';
 
-export function mergeQueryKeys<FactoryOutputs extends AnyFactoryOutput[]>(
+export function mergeQueryKeys<FactoryOutputs extends AnyQueryKeyFactoryResult[]>(
   ...schemas: FactoryOutputs
-): FactoryFromMergedQueryKeys<FactoryOutputs> {
+): StoreFromMergedQueryKeys<FactoryOutputs> {
   const factory = schemas.reduce((factoryMap, current) => {
     const [factoryKey] = current.default;
 
