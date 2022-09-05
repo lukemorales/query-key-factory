@@ -1,6 +1,5 @@
 import dts from 'rollup-plugin-dts';
 import esbuild from 'rollup-plugin-esbuild';
-import size from 'rollup-plugin-size';
 import { terser } from 'rollup-plugin-terser';
 import pkg from './package.json';
 
@@ -14,7 +13,7 @@ const bundle = (config) => ({
 
 export default [
   bundle({
-    plugins: [esbuild(), size(), terser()],
+    plugins: [esbuild(), terser()],
     output: [
       {
         file: `${name}.js`,
