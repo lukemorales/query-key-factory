@@ -1,3 +1,4 @@
+import { omitPrototype } from './internals';
 import { AnyQueryKeyFactoryResult, StoreFromMergedQueryKeys } from './types';
 
 export function mergeQueryKeys<FactoryOutputs extends AnyQueryKeyFactoryResult[]>(
@@ -10,5 +11,5 @@ export function mergeQueryKeys<FactoryOutputs extends AnyQueryKeyFactoryResult[]
     return factoryMap;
   }, new Map());
 
-  return Object.fromEntries(factory);
+  return omitPrototype(Object.fromEntries(factory));
 }

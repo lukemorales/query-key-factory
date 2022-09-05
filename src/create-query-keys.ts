@@ -1,3 +1,4 @@
+import { omitPrototype } from './internals';
 import type {
   DefaultKey,
   FactoryObject,
@@ -20,9 +21,9 @@ export function createQueryKeys<Key extends string, FactorySchema extends Factor
   factorySchema?: ValidateFactory<FactorySchema>,
 ): DefaultKey<Key> | QueryKeyFactoryResult<Key, ValidateFactory<FactorySchema>> {
   if (factorySchema == null) {
-    return {
+    return omitPrototype({
       default: [defaultKey] as const,
-    };
+    });
   }
 
   const schemaKeys = assertSchemaKeys(factorySchema);
@@ -84,14 +85,13 @@ export function createQueryKeys<Key extends string, FactorySchema extends Factor
     }
 
     factoryMap.set(key, yieldValue);
-
     return factoryMap;
   }, new Map<keyof Factory, Factory[keyof Factory]>());
 
-  return {
+  return omitPrototype({
     default: [defaultKey] as const,
-    ...Object.fromEntries(factory),
-  };
+    ...omitPrototype(Object.fromEntries(factory)),
+  });
 }
 
 const assertSchemaKeys = (schema: Record<string, unknown>): string[] => {

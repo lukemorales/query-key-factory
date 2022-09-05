@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Add } from './types.utils';
+import { Add } from './internals';
 
 type AnyObject = Record<string, unknown>;
 

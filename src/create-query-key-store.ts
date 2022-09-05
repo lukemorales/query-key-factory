@@ -1,4 +1,5 @@
 import { createQueryKeys } from './create-query-keys';
+import { omitPrototype } from './internals';
 import { QueryKeyStoreSchema, QueryKeyStore } from './types';
 
 export function createQueryKeyStore<StoreSchema extends QueryKeyStoreSchema>(
@@ -15,5 +16,5 @@ export function createQueryKeyStore<StoreSchema extends QueryKeyStoreSchema>(
     return storeMap;
   }, new Map());
 
-  return Object.fromEntries(store);
+  return omitPrototype(Object.fromEntries(store));
 }

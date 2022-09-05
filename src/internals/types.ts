@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // See https://github.com/Microsoft/TypeScript/issues/26223#issuecomment-674514787 for original types
+
 type BuildPowersOf2LengthArrays<N extends number, R extends never[][]> = R[0][N] extends never
   ? R
   : BuildPowersOf2LengthArrays<N, [[...R[0], ...R[0]], ...R]>;
@@ -29,4 +30,7 @@ type TupleOf<T, N extends number> = number extends N
 
 type Length<T extends any[]> = T extends { length: infer L } ? L : never;
 
+/**
+ * @internal
+ */
 export type Add<A extends number, B extends number> = Length<[...TupleOf<any, A>, ...TupleOf<any, B>]>;
