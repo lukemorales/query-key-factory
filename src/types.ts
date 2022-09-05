@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Add } from './types.utils';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 type AnyObject = Record<string, unknown>;
 
 export type KeyScopeTuple = [KeyScopeValue | undefined, ...Array<KeyScopeValue | undefined>];
@@ -54,24 +54,44 @@ export type DefaultKey<Key extends string> = Record<'default', readonly [Key]>;
 export type QueryKeyFactoryResult<Key extends string, FactorySchema extends FactoryObject> = DefaultKey<Key> &
   FactoryOutput<Key, FactorySchema>;
 
-export type AnyFactoryOutput = DefaultKey<string> | QueryKeyFactoryResult<string, any>;
+export type AnyQueryKeyFactoryResult = DefaultKey<string> | QueryKeyFactoryResult<string, any>;
 
-export type inferQueryKeys<FactorySchema extends AnyFactoryOutput> = {
+export type inferQueryKeys<FactorySchema extends AnyQueryKeyFactoryResult> = {
   [P in keyof FactorySchema]: FactorySchema[P] extends (...args: any[]) => readonly any[]
     ? ReturnType<FactorySchema[P]>
     : FactorySchema[P];
 };
 
-export type FactoryFromMergedQueryKeys<
-  FactoryOutputs extends AnyFactoryOutput[],
+export type StoreFromMergedQueryKeys<
+  QueryKeyFactoryResults extends AnyQueryKeyFactoryResult[],
   Index extends number = 0,
-> = FactoryOutputs[Index] extends null | undefined
-  ? {} // eslint-disable-line @typescript-eslint/ban-types
+> = QueryKeyFactoryResults[Index] extends null | undefined
+  ? {}
   : {
-      [P in FactoryOutputs[Index]['default'][0]]: FactoryOutputs[Index];
-    } & FactoryFromMergedQueryKeys<FactoryOutputs, Add<Index, 1>>;
+      [P in QueryKeyFactoryResults[Index]['default'][0]]: QueryKeyFactoryResults[Index];
+    } & StoreFromMergedQueryKeys<QueryKeyFactoryResults, Add<Index, 1>>;
 
-export type inferMergedFactory<Schema extends FactoryFromMergedQueryKeys<[]>> = {
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  [P in keyof Schema]: Schema[P] extends AnyFactoryOutput ? inferQueryKeys<Schema[P]> : {};
+/**
+ * @deprecated This type will be removed on the next major release, please use `inferMergedStore` instead
+ */
+export type inferMergedFactory<Schema extends StoreFromMergedQueryKeys<[]>> = {
+  [P in keyof Schema]: Schema[P] extends AnyQueryKeyFactoryResult ? inferQueryKeys<Schema[P]> : {};
+};
+
+export type inferMergedStore<MergedStoreSchema extends StoreFromMergedQueryKeys<[]>> = {
+  [P in keyof MergedStoreSchema]: MergedStoreSchema[P] extends AnyQueryKeyFactoryResult
+    ? inferQueryKeys<MergedStoreSchema[P]>
+    : {};
+};
+
+export type QueryKeyStoreSchema = Record<string, null | FactoryObject>;
+
+export type QueryKeyStore<StoreSchema extends QueryKeyStoreSchema> = {
+  [P in keyof StoreSchema]: StoreSchema[P] extends FactoryObject
+    ? QueryKeyFactoryResult<`${string & P}`, StoreSchema[P]>
+    : DefaultKey<`${string & P}`>;
+};
+
+export type inferQueryKeyStore<Store extends QueryKeyStore<any>> = {
+  [P in keyof Store]: inferQueryKeys<Store[P]>;
 };
