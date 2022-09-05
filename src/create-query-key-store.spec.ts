@@ -15,7 +15,7 @@ describe('createQueryKeyStore', () => {
     expect(store).toHaveProperty('users');
     expect(store).toHaveProperty('todos');
 
-    expect(store).toStrictEqual({
+    expect(store).toMatchObject({
       users: {
         default: ['users'],
       },

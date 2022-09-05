@@ -20,7 +20,7 @@ describe('mergeQueryKeys', () => {
     expect(keysFactory).toHaveProperty('users');
     expect(keysFactory).toHaveProperty('todos');
 
-    expect(keysFactory).toStrictEqual({
+    expect(keysFactory).toMatchObject({
       users: usersKeys,
       todos: todosKeys,
     });
