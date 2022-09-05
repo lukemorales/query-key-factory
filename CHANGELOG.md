@@ -1,5 +1,11 @@
 # @lukemorales/query-key-factory
 
+## 0.5.0
+
+### Minor Changes
+
+- Create `createQueryKeyStore` to allow declaring all feature keys in one place
+
 ## 0.4.0
 
 ### Minor Changes
