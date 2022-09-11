@@ -52,6 +52,7 @@
     "no-use-before-define": "off",
     "no-unneeded-ternary": "error",
     "no-unused-vars": "off",
+    "no-underscore-dangle": "off",
     "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }],
     "no-param-reassign": ["error", {
       "props": true,
@@ -69,8 +70,9 @@
       }
     ],
     "@typescript-eslint/camelcase": "off",
-    "@typescript-eslint/no-useless-constructor": "error",
     "@typescript-eslint/indent": "off",
+    "@typescript-eslint/no-useless-constructor": "error",
+    "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-use-before-define": "off",
     "@typescript-eslint/no-unused-vars": ["warn", {
       "argsIgnorePattern": "^_",
