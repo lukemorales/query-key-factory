@@ -3,24 +3,30 @@ import { mergeQueryKeys } from './merge-query-keys';
 
 describe('mergeQueryKeys', () => {
   const performSetup = () => {
+    interface Filters {
+      preview: boolean;
+      status: 'completed' | 'in-progress';
+    }
+
     const usersKeys = createQueryKeys('users');
     const todosKeys = createQueryKeys('todos', {
-      done: null,
-      todo: (id: string) => id,
+      detail: (todoId: string) => todoId,
+      list: (filters: Filters) => ({ filters }),
+      search: (query: string, limit = 15) => [query, limit],
     });
 
     return { usersKeys, todosKeys };
   };
 
-  it('merges the keys into a single factory object using their default keys as the object properties', () => {
+  it('merges the keys into a single store object using the "_def" values as the properties', () => {
     const { usersKeys, todosKeys } = performSetup();
 
-    const keysFactory = mergeQueryKeys(usersKeys, todosKeys);
+    const store = mergeQueryKeys(usersKeys, todosKeys);
 
-    expect(keysFactory).toHaveProperty('users');
-    expect(keysFactory).toHaveProperty('todos');
+    expect(store).toHaveProperty('users');
+    expect(store).toHaveProperty('todos');
 
-    expect(keysFactory).toMatchObject({
+    expect(store).toEqual({
       users: usersKeys,
       todos: todosKeys,
     });

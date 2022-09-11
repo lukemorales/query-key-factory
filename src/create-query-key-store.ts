@@ -3,16 +3,16 @@ import { omitPrototype } from './internals';
 import { QueryKeyStoreSchema, QueryKeyStore } from './types';
 
 export function createQueryKeyStore<StoreSchema extends QueryKeyStoreSchema>(
-  storeSchema: StoreSchema,
+  schema: StoreSchema,
 ): QueryKeyStore<StoreSchema> {
-  const storeKeys = Object.keys(storeSchema);
+  const keys = Object.keys(schema);
 
-  const store = storeKeys.reduce((storeMap, key) => {
-    const scopeFactory = storeSchema[key];
+  const store = keys.reduce((storeMap, key) => {
+    const factory = schema[key];
 
-    const factoryResult = scopeFactory ? createQueryKeys(key, scopeFactory) : createQueryKeys(key);
+    const result = factory ? createQueryKeys(key, factory) : createQueryKeys(key);
 
-    storeMap.set(key, factoryResult);
+    storeMap.set(key, result);
     return storeMap;
   }, new Map());
 
