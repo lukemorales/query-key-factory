@@ -32,205 +32,254 @@ npm install @lukemorales/query-key-factory
 
 ## ⚡ Quick start
 Start by defining the query keys for the features of your app:
+
+### Declare your store in a single file
 ```ts
-import { createQueryKeyStore, createQueryKeys, mergeQueryKeys } from "@lukemorales/query-key-factory";
+import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 
 // if your prefer to declare everything in one file
 export const queryKeys = createQueryKeyStore({
   users: null,
-  products: {
-    bestSelling: null,
-    search: (query: string, limit = 15) => ({ query, limit }),
-    byId: (productId: string) => ({ productId }),
+  todos: {
+    list: (filters: TodoFilters) => ({ filters }),
+    search: (query: string, limit = 15) => [query, limit],
+    todo: (todoId: string) => todoId,
   },
 });
+```
 
-// if you prefer to split your code by features
+### Fine-grained declaration colocated by features
+```ts
+import { createQueryKeys, mergeQueryKeys } from "@lukemorales/query-key-factory";
 
-// query-key-store/users.ts
+// queries/users.ts
 export const usersKeys = createQueryKeys('users');
 
-// query-key-store/products.ts
-export const productsKeys = createQueryKeys('products', {
-  bestSelling: null,
-  search: (query: string, limit = 15) => ({ query, limit }),
-  byId: (productId: string) => ({ productId }),
+// queries/todos.ts
+export const todosKeys = createQueryKeys('todos', {
+  list: (filters: TodoFilters) => ({ filters }),
+  search: (query: string, limit = 15) => [query, limit],
+  todo: (todoId: string) => todoId,
 });
 
-// query-key-store/index.ts
-export const queryKeys = mergeQueryKeys(usersKeys, productsKeys);
+// queries/index.ts
+export const queryKeys = mergeQueryKeys(usersKeys, todosKeys);
 ```
 
 Use throughout your codebase as the single source for writing the query keys for your cache management:
-```tsx
-import { queryKeys } from '../query-key-store';
 
-const UserList: FC = () => {
-  const users = useQuery(queryKeys.users.default, fetchUsers);
+```ts
+import { queryKeys } from '../queries';
 
-  return <div> {/* render product page */} </div>;
+export function useUsers() {
+  return useQuery(queryKeys.users._def, fetchUsers);
 };
-
-const ProductList: FC = () => {
-  const [search, setSeach] = useState('');
-  const [productsPerPage, setProductsPerPage] = useState(15);
-
-  const products = useQuery(queryKeys.products.search(search, productsPerPage), fetchProducts);
-
-  useEffect(() => {
-    if (search === '') {
-      // invalidate cache only for the search scope
-      queryClient.invalidateQueries(queryKeys.products.search.toScope());
-    }
-  }, [search]);
-
-  return <div> {/* render product list */} </div>;
-};
-
-const Product: FC = () => {
-  const { productId } = useParams();
-  const product = useQuery(queryKeys.products.byId(productId), fetchProduct);
-
-  const onAddToCart = () => {
-    // invalidade cache for entire feature
-    queryClient.invalidateQueries(queryKeys.products.default);
-  }
-
-  return <div> {/* render product page */} </div>;
-}
 ```
+
+```ts
+import { queryKeys } from '../queries';
+
+export function useTodos(filters: TodoFilters) {
+  return useQuery(queryKeys.todos.list(filters), fetchTodos);
+};
+
+export function useSearchTodos(query: string, limit = 15) {
+  return useQuery(queryKeys.todos.search(query, limit), fetchSearchTodos, {
+    enabled: Boolean(query),
+  });
+};
+
+export function useUpdateTodo() {
+  const queryClient = useQueryClient();
+
+  return useMutation(updateTodo, {
+    onSuccess(newTodo) {
+      queryClient.setQueryData(queryKeys.todos.todo(newTodo.id), newTodo);
+
+      // invalidate all the list queries
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.todos.list._def,
+        refetchActive: false,
+      });
+    },
+  });
+};
+```
+<br />
 
 ## 📝 Features
-### Typesafe and autocomplete
-Typescript is a first class citizen of the Query Key Factory lib, providing easy of use and autocomplete for all query keys available and their outputs. Don't remember if a key is serializable or the shape of a key? Just mouseover and your IDE will show you all information you need to know.
-
 ### Standardized keys
-All keys generated follow the @tanstack/query recommendation of being an [array at top level](https://tanstack.com/query/v4/docs/guides/query-keys), including [keys with serializable objects](https://tanstack.com/query/v4/docs/guides/query-keys#array-keys-with-variables):
+All keys generated follow the @tanstack/query standard of being an [array at top level](https://tanstack.com/query/v4/docs/guides/query-keys), including [keys with serializable objects](https://tanstack.com/query/v4/docs/guides/query-keys#array-keys-with-variables):
 
 ```ts
-const todosKeys = createQueryKeys('todos', {
-  done: null,
-  preview: true,
-  single: (id: string) => id,
+export const todosKeys = createQueryKeys('todos', {
+  list: (filters: TodoFilters) => ({ filters }),
+  search: (query: string, limit = 15) => [query, limit],
+  todo: (todoId: string) => todoId,
 });
 
-// shape of createQueryKeys output
-todosKeys = {
-  default: ['todos'],
-  done: ['todos', 'done'],
-  preview: ['todos', 'preview', true],
-  single: ('todo_id') => ['todos', 'single', 'todo_id'],
-};
+// => createQueryKeys output:
+// {
+//   _def: ['todos'],
+//   list: (filters: TodoFilters) => ['todos', 'list', { filters }],
+//   search: (query: string, limit = 15) => ['todos', 'search', query, limit],
+//   todo: (todoId: string) => ['todos', 'todo', todoId],
+// }
 ```
 
-### Access to serializable keys scoped form
+### Access to serializable keys scope definition
 Easy way to access the serializable key scope and invalidade all cache for that context:
 ```ts
-const todosKeys = createQueryKeys('todos', {
-  single: (id: string) => id,
-  tag: (tagId: string) => ({ tagId }),
-  search: (query: string, limit: number) => [query, { limit }],
-  filter: ({ filter, status, limit }: FilterOptions) => [filter, status, limit],
-});
+todosKeys.list({ status: 'completed' }) // => ['todos', 'list', { status: 'completed' }]
+todosKeys.list._def; // => ['todos', 'list']
 
+todosKeys.search('tanstack query', 15); // => ['todos', 'search', 'tanstack query', 15]
+todosKeys.search._def; // => ['todos', 'search']
 
-todosKeys.single('todo_id');
-// ['todos', 'single', 'todo_id']
-
-todosKeys.tag('tag_homework');
-// ['todos', 'tag', { tagId: 'tag_homework' }]
-
-todosKeys.search('learn tanstack query', 15);
-// ['todos', 'search', 'learn tanstack query', { limit: 15 }]
-
-todosKeys.filter({ filter: 'not-owned-by-me', status: 'done', limit: 15 });
-// ['todos', 'filter', 'not-owned-by-me', 'done', 15]
-
-
-todosKeys.single.toScope(); // ['todos', 'single']
-todosKeys.tag.toScope(); // ['todos', 'tag']
-todosKeys.search.toScope(); // ['todos', 'search']
+todosKeys.todo('todo-id'); // => ['todos', 'todo', 'todo-id']
+todosKeys.todo._def; // => ['todos', 'todo']
 ```
 
 ### Create a single point of access for all your query keys
 
-#### Declare your query keys store in one place
-Just one file to edit and maintain your store:
+#### Declare your query keys store in a single file
+Just one place to edit and maintain your store:
 ```ts
 export const queryKeys = createQueryKeyStore({
   users: null,
   todos: {
-    done: null,
-    preview: true,
-    single: (id: string) => id,
+    list: (filters: TodoFilters) => ({ filters }),
+    search: (query: string, limit = 15) => [query, limit],
+    todo: (todoId: string) => todoId,
   },
 });
 
-export type QueryKeys = inferQueryKeyStore<typeof queryKeys>;
-
-// shape of createQueryKeyStore output
-queryKeys = {
-  users: {
-    default: ['users'],
-  },
-  todos: {
-    default: ['todos'],
-    done: ['todos', 'done'],
-    preview: ['todos', 'preview', true],
-    single: (id: string) => id,
-  },
-};
+// => createQueryKeyStore output:
+// {
+//   users: {
+//     _def: ['users'],
+//   },
+//   todos: {
+//     _def: ['todos'],
+//     list: (filters: TodoFilters) => ['todos', 'list', { filters }],
+//     search: (query: string, limit = 15) => ['todos', 'search', query, limit],
+//     todo: (todoId: string) => ['todos', 'todo', todoId],
+//   },
+// };
 ```
 
 #### Declare your query keys by feature
 Have fine-grained control over your features' keys and merge them into a single object to have access to all your query keys in your codebase:
 
 ```ts
+// queries/users.ts
 const usersKeys = createQueryKeys('users');
 
+// queries/todos.ts
 const todosKeys = createQueryKeys('todos', {
-  done: null,
-  preview: true,
-  single: (id: string) => id,
+  list: (filters: TodoFilters) => ({ filters }),
+  search: (query: string, limit = 15) => [query, limit],
+  todo: (todoId: string) => todoId,
 });
 
+// queries/index.ts
 export const queryKeys = mergeQueryKeys(usersKeys, todosKeys);
-export type QueryKeys = inferMergedStore<typeof queryKeys>;
 
-// shape of mergeQueryKeys output
-queryKeys = {
-  users: {
-    default: ['users'],
-  },
-  todos: {
-    default: ['todos'],
-    done: ['todos', 'done'],
-    preview: ['todos', 'preview', true],
-    single: (id: string) => id,
-  },
-};
+// => mergeQueryKeys output:
+// {
+//   users: {
+//     _def: ['users'],
+//   },
+//   todos: {
+//     _def: ['todos'],
+//     list: (filters: TodoFilters) => ['todos', 'list', { filters }],
+//     search: (query: string, limit = 15) => ['todos', 'search', query, limit],
+//     todo: (todoId: string) => ['todos', 'todo', todoId],
+//   },
+// };
 ```
 
-### Type your QueryFunctionContext with ease
+### Type safety and smart autocomplete
+Typescript is a first class citizen of the Query Key Factory lib, providing easy of use and autocomplete for all query keys available and their outputs. Don't remember if a key is serializable or the shape of a key? Just mouseover and your IDE will show you all information you need to know.
+
+#### Infer the type of the store's query keys
+```ts
+import { createQueryKeyStore, inferQueryKeyStore } from "@lukemorales/query-key-factory";
+
+export const queryKeys = createQueryKeyStore({
+  users: null,
+  todos: {
+    list: (filters: TodoFilters) => ({ filters }),
+    search: (query: string, limit = 15) => [query, limit],
+    todo: (todoId: string) => todoId,
+  },
+});
+
+export type QueryKeys = inferQueryKeyStore<typeof queryKeys>;
+
+// => QueryKeys type:
+// {
+//   users: {
+//     _def: readonly ['users'];
+//   };
+//   todos: {
+//     _def: readonly ['todos'];
+//     list: readonly ['todos', 'list', { filters: TodoFilters }];
+//     search: readonly ['todos', 'search', string, number];
+//     todo: readonly ['todos', 'todo', string];
+//   };
+// }
+```
+```ts
+import { createQueryKeys, inferQueryKeyStore } from "@lukemorales/query-key-factory";
+
+// queries/users.ts
+const usersKeys = createQueryKeys('users');
+
+// queries/todos.ts
+const todosKeys = createQueryKeys('todos', {
+  list: (filters: TodoFilters) => ({ filters }),
+  search: (query: string, limit = 15) => [query, limit],
+  todo: (todoId: string) => todoId,
+});
+
+// queries/index.ts
+export const queryKeys = mergeQueryKeys(usersKeys, todosKeys);
+
+export type QueryKeys = inferQueryKeyStore<typeof queryKeys>;
+```
+
+#### Infer the type of a feature's query keys
+```ts
+import { createQueryKeys, inferQueryKeys } from "@lukemorales/query-key-factory";
+
+export const todosKeys = createQueryKeys('todos', {
+  list: (filters: TodoFilters) => ({ filters }),
+  search: (query: string, limit = 15) => [query, limit],
+  todo: (todoId: string) => todoId,
+});
+
+export type TodosKeys = inferQueryKeys<typeof todosKeys>;
+```
+
+#### Type your QueryFunctionContext with ease
 Get accurate types of your query keys passed to the `queryFn` context:
 
 ```ts
-import { createQueryKeys, inferQueryKeys } from "@lukemorales/query-key-factory"
+import type { QueryKeys } from "../queries";
+import type { TodosKeys } from "../queries/todos";
 
-const todosKeys = createQueryKeys('todos', {
-  single: (id: string) => id,
-  tag: (tagId: string) => ({ tagId }),
-  search: (query: string, limit: number) => [query, { limit }],
-  filter: ({ filter, status, limit }: FilterOptions) => [filter, status, limit],
-});
+type TodosListQueryKey = QueryKeys['todos']['list'] | TodosKeys['list'];
 
-type TodoKeys = inferQueryKeys<typeof todosKeys>
+const fetchTodos = async (ctx: QueryFunctionContext<TodosListQueryKey>) => {
+  const [, , { filters }] = ctx.queryKey; // readonly ['todos', 'list', { filters }]
 
-const fetchTodosByTag = (context: QueryFunctionContext<TodoKeys['tag']>) => {
-  const queryKey = context.queryKey // readonly ['todos', 'tag', { tagId: string }]
+  const search = new URLSearchParams(filters);
 
-  // fetch todos...
+  return fetch(`${BASE_URL}/todos?${search.toString()}`).then(data => data.json());
 }
 
-useQuery(todosKeys.tag('tag_homework'), fetchTodosByTag)
+export function useTodos(filters: TodoFilters) {
+  return useQuery(queryKeys.todos.list(filters), fetchTodos);
+};
 ```

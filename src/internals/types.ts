@@ -1,6 +1,19 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/**
+ * @internal
+ */
+export type DeprecatedKey = 'default' | 'toScope' | (string & Record<never, never>);
 
-// See https://github.com/Microsoft/TypeScript/issues/26223#issuecomment-674514787 for original types
+/**
+ * @internal
+ */
+export type ExtractInternalKeys<T extends Record<string, unknown>> = Extract<keyof T, `_${string}` | 'default'>;
+
+/**
+ * Math types for iterating over `mergeQueryKeys` schemas and
+ * guaranteeing type-safety for the keys
+ *
+ * @see https://github.com/Microsoft/TypeScript/issues/26223#issuecomment-674514787 for original types
+ */
 
 type BuildPowersOf2LengthArrays<N extends number, R extends never[][]> = R[0][N] extends never
   ? R

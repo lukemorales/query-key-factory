@@ -1,5 +1,11 @@
 # @lukemorales/query-key-factory
 
+## 0.6.0
+
+### Minor Changes
+
+- Introduce internal `_def` key and deprecate `default` and `toScope`
+
 ## 0.5.0
 
 ### Minor Changes

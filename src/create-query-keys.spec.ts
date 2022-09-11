@@ -2,100 +2,117 @@ import { createQueryKeys } from './create-query-keys';
 
 describe('createQueryKeys', () => {
   describe('when called with only one argument', () => {
-    it('creates a factory with only "default" if called with one parameter', () => {
-      const queryKeys = createQueryKeys('master-key');
+    it('creates a store with only "_def" if called with one parameter', () => {
+      const queryKeys = createQueryKeys('users');
 
-      expect(queryKeys).toHaveProperty('default');
+      expect(queryKeys).toHaveProperty('_def');
       expect(Object.keys(queryKeys)).toHaveLength(1);
 
-      expect(queryKeys).toMatchObject({
-        default: ['master-key'],
+      expect(queryKeys).toEqual({
+        _def: ['users'],
       });
     });
 
-    it('creates the "default" query key as an array', () => {
-      const queryKeys = createQueryKeys('master-key');
+    it('creates the "_def" query key as an array', () => {
+      const queryKeys = createQueryKeys('users');
 
-      expect(Array.isArray(queryKeys.default)).toBeTruthy();
-      expect(queryKeys.default).toHaveLength(1);
+      expect(Array.isArray(queryKeys._def)).toBeTruthy();
+      expect(queryKeys._def).toHaveLength(1);
+
+      expect(queryKeys._def).toEqual(['users']);
+
+      // TODO: delete expectation block on next major release
+      // eslint-disable-next-line no-lone-blocks
+      {
+        expect(Array.isArray(queryKeys.default)).toBeTruthy();
+
+        expect(queryKeys.default).toHaveLength(1);
+        expect(queryKeys.default).toEqual(['users']);
+      }
     });
   });
 
-  describe('when called with the scope key and the factory schema', () => {
-    it('creates a factory that contains the "default" key and the schema', () => {
-      const queryKeys = createQueryKeys('master-key', {
-        users: 'all',
-        products: 'recent',
-      });
+  describe('when called with the key and the factory schema', () => {
+    it('throws an error if the factory schema contains a key that starts with "_"', () => {
+      expect(() =>
+        createQueryKeys('users', {
+          // @ts-expect-error: "_def" should not be an allowed key
+          _def: 'trying to override the _def key value',
+          role: 'admin',
+        }),
+      ).toThrow('Keys that start with "_" are reserved for the query key factory');
 
-      expect(queryKeys).toHaveProperty('default');
-      expect(queryKeys).toHaveProperty('users');
-      expect(queryKeys).toHaveProperty('products');
-
-      expect(queryKeys).toMatchObject({
-        default: ['master-key'],
-        users: ['master-key', 'users', 'all'],
-        products: ['master-key', 'products', 'recent'],
-      });
+      // TODO: delete expectation block on next major release
+      // eslint-disable-next-line no-lone-blocks
+      {
+        expect(() =>
+          createQueryKeys('users', {
+            // @ts-expect-error: "default" should not be an allowed key
+            default: 'trying to override the default key value',
+            role: 'admin',
+          }),
+        ).toThrow('"default" is a key reserved for the query key factory');
+      }
     });
 
-    it('throws an error if the factory schema contains a "default" key', () => {
-      expect(() =>
-        createQueryKeys('master-key', {
-          // @ts-expect-error: "default" should not be an allowed key
-          default: 'trying to override the default key value',
-          settings: 'admin',
-        }),
-      ).toThrow('"default" is a key reserved for the "createQueryKeys" function');
+    it('creates a store that contains the "_def" key and the schema', () => {
+      const queryKeys = createQueryKeys('todos', {
+        status: 'open',
+        priority: 'high',
+      });
+
+      expect(queryKeys).toHaveProperty('_def');
+      expect(queryKeys).toHaveProperty('status');
+      expect(queryKeys).toHaveProperty('priority');
+
+      expect(queryKeys).toMatchObject({
+        _def: ['todos'],
+        status: ['todos', 'status', 'open'],
+        priority: ['todos', 'priority', 'high'],
+      });
     });
 
     describe('when the schema property is not a function', () => {
-      it('creates an array in the shape [default-key, schema-key] if the value is NULL', () => {
-        const queryKeys = createQueryKeys('master-key', {
-          settings: null,
+      it('creates an array in the shape [key, schema.property] if the value is NULL', () => {
+        const queryKeys = createQueryKeys('users', {
+          me: null,
         });
 
-        expect(queryKeys.settings).toHaveLength(2);
-        expect(queryKeys.settings).toStrictEqual(['master-key', 'settings']);
+        expect(queryKeys.me).toHaveLength(2);
+        expect(queryKeys.me).toEqual(['users', 'me']);
       });
 
-      it('creates an array in the shape [default-key, schema-key, value] if the value is not NULL', () => {
-        const queryKeys = createQueryKeys('master-key', {
-          'max-products': 5,
-          admin: true,
-          customer: false,
+      it('creates an array in the shape [key, schema.property, value] if the value is not NULL', () => {
+        const queryKeys = createQueryKeys('users', {
+          role: 'admin',
         });
 
-        expect(queryKeys['max-products']).toHaveLength(3);
-        expect(queryKeys.admin).toHaveLength(3);
-        expect(queryKeys.customer).toHaveLength(3);
+        expect(queryKeys.role).toHaveLength(3);
 
-        expect(queryKeys['max-products']).toStrictEqual(['master-key', 'max-products', 5]);
-        expect(queryKeys.admin).toStrictEqual(['master-key', 'admin', true]);
-        expect(queryKeys.customer).toStrictEqual(['master-key', 'customer', false]);
+        expect(queryKeys.role).toEqual(['users', 'role', 'admin']);
       });
     });
 
     describe('when the schema property is a function', () => {
       describe('when the function returns a primitive', () => {
         it('creates a callback that returns a formatted query key', () => {
-          const queryKeys = createQueryKeys('master-key', {
+          const queryKeys = createQueryKeys('todos', {
             todo: (id: string) => id,
           });
 
           expect(typeof queryKeys.todo).toBe('function');
 
-          const generatedKey = queryKeys.todo('todo-id');
+          const result = queryKeys.todo('todo-id');
 
-          expect(Array.isArray(generatedKey)).toBeTruthy();
-          expect(generatedKey).toHaveLength(3);
-          expect(generatedKey).toStrictEqual(['master-key', 'todo', 'todo-id']);
+          expect(Array.isArray(result)).toBeTruthy();
+          expect(result).toHaveLength(3);
+          expect(result).toEqual(['todos', 'todo', 'todo-id']);
         });
       });
 
       describe('when the function returns an object', () => {
         it('creates a callback that returns a formatted query key', () => {
-          const queryKeys = createQueryKeys('master-key', {
+          const queryKeys = createQueryKeys('todos', {
             todo: (id: string, preview: boolean) => ({ id, preview }),
           });
 
@@ -105,73 +122,68 @@ describe('createQueryKeys', () => {
 
           expect(Array.isArray(generatedKey)).toBeTruthy();
           expect(generatedKey).toHaveLength(3);
-          expect(generatedKey).toStrictEqual(['master-key', 'todo', { id: 'todo-id', preview: true }]);
+          expect(generatedKey).toEqual(['todos', 'todo', { id: 'todo-id', preview: true }]);
         });
       });
 
       describe('when the function returns a tuple', () => {
-        type TodoStatus = 'done' | 'ongoing';
-
-        type Test = {
+        interface Options {
           id: string;
           preview: boolean;
-          status: TodoStatus;
+          status: 'completed' | 'in-progress';
           tasksPerPage: number;
-        };
+        }
 
         it('creates a function that returns a formatted query key when the result is an array', () => {
-          const queryKeys = createQueryKeys('master-key', {
-            todoKeyWithTuple: ({ id, preview, status, tasksPerPage }: Test) => [id, preview, status, tasksPerPage],
-            todoKeyWithRecord: (id: string, preview: boolean) => [id, { preview }],
+          const queryKeys = createQueryKeys('todos', {
+            tuple: ({ id, preview, status, tasksPerPage }: Options) => [id, preview, status, tasksPerPage],
+            tupleWithRecord: (id: string, preview: boolean) => [id, { preview }],
           });
 
-          expect(typeof queryKeys.todoKeyWithTuple).toBe('function');
-          expect(typeof queryKeys.todoKeyWithRecord).toBe('function');
+          {
+            expect(typeof queryKeys.tuple).toBe('function');
 
-          const generatedKeyWithTuple = queryKeys.todoKeyWithTuple({
-            //  ^?
-            id: 'ongoing-todo-id',
-            preview: true,
-            status: 'ongoing',
-            tasksPerPage: 3,
-          });
-          const generatedKeyWithRecord = queryKeys.todoKeyWithRecord('todo-id', false);
-          //    ^?
+            const result = queryKeys.tuple({
+              id: 'todo-id',
+              preview: true,
+              status: 'completed',
+              tasksPerPage: 3,
+            });
 
-          expect(Array.isArray(generatedKeyWithTuple)).toBeTruthy();
-          expect(generatedKeyWithTuple).toHaveLength(6);
-          expect(generatedKeyWithTuple).toStrictEqual([
-            'master-key',
-            'todoKeyWithTuple',
-            'ongoing-todo-id',
-            true,
-            'ongoing',
-            3,
-          ]);
+            expect(Array.isArray(result)).toBeTruthy();
+            expect(result).toHaveLength(6);
+            expect(result).toEqual(['todos', 'tuple', 'todo-id', true, 'completed', 3]);
+          }
 
-          expect(Array.isArray(generatedKeyWithRecord)).toBeTruthy();
-          expect(generatedKeyWithRecord).toHaveLength(4);
-          expect(generatedKeyWithRecord).toStrictEqual([
-            'master-key',
-            'todoKeyWithRecord',
-            'todo-id',
-            { preview: false },
-          ]);
+          {
+            expect(typeof queryKeys.tupleWithRecord).toBe('function');
+
+            const result = queryKeys.tupleWithRecord('todo-id', false);
+
+            expect(Array.isArray(result)).toBeTruthy();
+            expect(result).toHaveLength(4);
+            expect(result).toEqual(['todos', 'tupleWithRecord', 'todo-id', { preview: false }]);
+          }
         });
       });
 
-      it('exposes a "toScope" function that returns an array in the shape [default-key, schema-key]', () => {
-        const queryKeys = createQueryKeys('master-key', {
+      it('exposes a "_def" property that returns [key, schema.property]', () => {
+        const queryKeys = createQueryKeys('todos', {
           todo: (id: string) => id,
         });
 
-        expect(queryKeys.todo).toHaveProperty('toScope');
-        expect(typeof queryKeys.todo.toScope).toBe('function');
+        expect(queryKeys.todo).toHaveProperty('_def');
 
-        const generatedScopeKey = queryKeys.todo.toScope();
+        expect(queryKeys.todo._def).toHaveLength(2);
+        expect(queryKeys.todo._def).toEqual(['todos', 'todo']);
 
-        expect(generatedScopeKey).toHaveLength(2);
-        expect(generatedScopeKey).toStrictEqual(['master-key', 'todo']);
+        // TODO: delete expectation block on next major release
+        {
+          const result = queryKeys.todo.toScope();
+
+          expect(result).toHaveLength(2);
+          expect(result).toEqual(['todos', 'todo']);
+        }
       });
     });
   });

@@ -2,11 +2,17 @@ import { createQueryKeyStore } from './create-query-key-store';
 
 describe('createQueryKeyStore', () => {
   it('creates a store from the schema provided as argument', () => {
+    interface Filters {
+      preview: boolean;
+      status: 'completed' | 'in-progress';
+    }
+
     const store = createQueryKeyStore({
       users: null,
       todos: {
-        done: null,
-        todo: (id: string) => id,
+        detail: (todoId: string) => todoId,
+        list: (filters: Filters) => ({ filters }),
+        search: (query: string, limit = 15) => [query, limit],
       },
     });
 
@@ -15,14 +21,15 @@ describe('createQueryKeyStore', () => {
     expect(store).toHaveProperty('users');
     expect(store).toHaveProperty('todos');
 
-    expect(store).toMatchObject({
+    expect(store).toEqual({
       users: {
-        default: ['users'],
+        _def: ['users'],
       },
       todos: {
-        default: ['todos'],
-        done: ['todos', 'done'],
-        todo: expect.any(Function),
+        _def: ['todos'],
+        detail: expect.any(Function),
+        list: expect.any(Function),
+        search: expect.any(Function),
       },
     });
   });
