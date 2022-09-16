@@ -1,5 +1,11 @@
 # @lukemorales/query-key-factory
 
+## 0.6.1
+
+### Patch Changes
+
+- Fix query key breaking devtools because of Proxy
+
 ## 0.6.0
 
 ### Minor Changes
