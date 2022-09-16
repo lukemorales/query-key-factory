@@ -1,6 +1,5 @@
-import { omitPrototype, withDeprecatedApi } from './internals';
+import { omitPrototype } from './internals';
 import type {
-  DefaultKey,
   DefinitionKey,
   FactoryObject,
   KeyScopeTuple,
@@ -10,7 +9,7 @@ import type {
   AnyFactoryOutputCallback,
 } from './types';
 
-export function createQueryKeys<Key extends string>(queryDef: Key): DefaultKey<Key>;
+export function createQueryKeys<Key extends string>(queryDef: Key): DefinitionKey<Key>;
 export function createQueryKeys<Key extends string, FactorySchema extends FactoryObject>(
   queryDef: Key,
   schema: ValidateFactory<FactorySchema>,
@@ -19,16 +18,13 @@ export function createQueryKeys<Key extends string, FactorySchema extends Factor
 export function createQueryKeys<Key extends string, FactorySchema extends FactoryObject>(
   queryDef: Key,
   schema?: ValidateFactory<FactorySchema>,
-): DefaultKey<Key> | QueryKeyFactoryResult<Key, ValidateFactory<FactorySchema>> {
+): DefinitionKey<Key> | QueryKeyFactoryResult<Key, ValidateFactory<FactorySchema>> {
   const defKey: DefinitionKey<Key> = {
     _def: [queryDef] as const,
   };
 
   if (schema == null) {
-    /**
-     * casting to satisfy type system that still includes "default"
-     */
-    return withDeprecatedApi(omitPrototype(defKey)) as DefaultKey<Key>;
+    return omitPrototype(defKey);
   }
 
   const schemaKeys = assertSchemaKeys(schema);
@@ -93,30 +89,19 @@ export function createQueryKeys<Key extends string, FactorySchema extends Factor
     return factoryMap;
   }, new Map());
 
-  /**
-   * casting to satisfy type system that still includes deprecated API
-   */
-  return withDeprecatedApi(
-    omitPrototype({
-      ...Object.fromEntries(factory),
-      ...defKey,
-    }),
-  ) as QueryKeyFactoryResult<Key, ValidateFactory<FactorySchema>>;
+  return omitPrototype({
+    ...Object.fromEntries(factory),
+    ...defKey,
+  });
 }
 
 const assertSchemaKeys = (schema: Record<string, unknown>): string[] => {
-  const keysSet = new Set(Object.keys(schema).sort((a, b) => a.localeCompare(b)));
-
-  if (keysSet.has('default')) {
-    throw new Error('"default" is a key reserved for the query key factory');
-  }
-
-  const keys = Array.from(keysSet);
+  const keys = Object.keys(schema).sort((a, b) => a.localeCompare(b));
 
   const hasKeyInShapeOfInternalKey = keys.some((key) => key.startsWith('_'));
 
   if (hasKeyInShapeOfInternalKey) {
-    throw new Error('Keys that start with "_" are reserved for the query key factory');
+    throw new Error('Keys that start with "_" are reserved for the Query Key Factory');
   }
 
   return keys;

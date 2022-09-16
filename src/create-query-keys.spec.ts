@@ -20,15 +20,6 @@ describe('createQueryKeys', () => {
       expect(queryKeys._def).toHaveLength(1);
 
       expect(queryKeys._def).toEqual(['users']);
-
-      // TODO: delete expectation block on next major release
-      // eslint-disable-next-line no-lone-blocks
-      {
-        expect(Array.isArray(queryKeys.default)).toBeTruthy();
-
-        expect(queryKeys.default).toHaveLength(1);
-        expect(queryKeys.default).toEqual(['users']);
-      }
     });
   });
 
@@ -40,19 +31,15 @@ describe('createQueryKeys', () => {
           _def: 'trying to override the _def key value',
           role: 'admin',
         }),
-      ).toThrow('Keys that start with "_" are reserved for the query key factory');
+      ).toThrow('Keys that start with "_" are reserved for the Query Key Factory');
 
-      // TODO: delete expectation block on next major release
-      // eslint-disable-next-line no-lone-blocks
-      {
-        expect(() =>
-          createQueryKeys('users', {
-            // @ts-expect-error: "default" should not be an allowed key
-            default: 'trying to override the default key value',
-            role: 'admin',
-          }),
-        ).toThrow('"default" is a key reserved for the query key factory');
-      }
+      expect(() =>
+        createQueryKeys('users', {
+          // @ts-expect-error: "_my_own_thing" should not be an allowed key
+          _my_own_thing: 'trying to create with the shape of an internal key',
+          role: 'admin',
+        }),
+      ).toThrow('Keys that start with "_" are reserved for the Query Key Factory');
     });
 
     it('creates a store that contains the "_def" key and the schema', () => {
@@ -65,7 +52,7 @@ describe('createQueryKeys', () => {
       expect(queryKeys).toHaveProperty('status');
       expect(queryKeys).toHaveProperty('priority');
 
-      expect(queryKeys).toMatchObject({
+      expect(queryKeys).toEqual({
         _def: ['todos'],
         status: ['todos', 'status', 'open'],
         priority: ['todos', 'priority', 'high'],
@@ -176,14 +163,6 @@ describe('createQueryKeys', () => {
 
         expect(queryKeys.todo._def).toHaveLength(2);
         expect(queryKeys.todo._def).toEqual(['todos', 'todo']);
-
-        // TODO: delete expectation block on next major release
-        {
-          const result = queryKeys.todo.toScope();
-
-          expect(result).toHaveLength(2);
-          expect(result).toEqual(['todos', 'todo']);
-        }
       });
     });
   });
