@@ -10,7 +10,10 @@ export const withDeprecatedApi = <T extends Record<string, unknown>>(schema: T) 
     get(target, property, receiver) {
       const originalValue = Reflect.get(target, property, receiver);
 
-      if (typeof originalValue === 'function' || (typeof originalValue === 'object' && originalValue != null)) {
+      if (
+        typeof originalValue === 'function' ||
+        (typeof originalValue === 'object' && !Array.isArray(originalValue) && originalValue != null)
+      ) {
         return new Proxy(originalValue, handler);
       }
 
