@@ -10,8 +10,8 @@ describe('mergeQueryKeys', () => {
 
     const usersKeys = createQueryKeys('users');
     const todosKeys = createQueryKeys('todos', {
-      detail: (todoId: string) => todoId,
-      list: (filters: Filters) => ({ filters }),
+      detail: (todoId: string) => [todoId],
+      list: (filters: Filters) => [{ filters }],
       search: (query: string, limit = 15) => [query, limit],
     });
 

@@ -2,67 +2,92 @@ import { Add, ExtractInternalKeys } from './internals';
 
 type AnyObject = Record<string, unknown>;
 
-export type KeyScopeTuple = [KeyScopeValue | undefined, ...Array<KeyScopeValue | undefined>];
+export type AnyQueryKey = readonly [string, ...any[]];
 
-type FactoryCallback = (...args: any[]) => KeyScopeValue | KeyScopeTuple;
+type Tuple = [ValidValue, ...Array<ValidValue | undefined>];
+export type KeyTuple = Tuple | Readonly<Tuple>;
 
-export type KeyScopeValue = string | number | boolean | AnyObject;
+export type ValidValue = string | number | boolean | AnyObject;
 
-type FactoryProperty = Exclude<KeyScopeValue, AnyObject> | null | FactoryCallback;
+type KeyWithArgumentsOrNestedKeys = (...args: any[]) => NestedKeySchema | KeyTuple;
 
-export type FactoryObject = Record<string, FactoryProperty>;
+type NestedKeySchema = {
+  def: readonly [string | number];
+  keys: FactorySchema;
+};
 
-type InvalidSchema<Schema extends FactoryObject> = Omit<Schema, `_${string}`>;
+type FactoryProperty = null | KeyTuple;
 
-export type ValidateFactory<Schema extends FactoryObject> = Schema extends {
+export type FactorySchema = Record<string, FactoryProperty | KeyWithArgumentsOrNestedKeys>;
+
+type ValidateSchema<Schema extends FactorySchema> = Omit<Schema, `_${string}`>;
+
+export type ValidateFactory<Schema extends FactorySchema> = Schema extends {
   [P in ExtractInternalKeys<Schema>]: Schema[P];
 }
-  ? InvalidSchema<Schema>
+  ? ValidateSchema<Schema>
   : Schema;
 
+type ExtractNestedKey<Key extends readonly [string | number]> = Key extends [infer Result] ? Result : never;
+
+type FactoryNestedKeyOutput<
+  ParentKeys extends any[],
+  Schema extends NestedKeySchema,
+  DefKey extends Schema['def'] = Schema['def'],
+  Factory extends Schema['keys'] = Schema['keys'],
+  NestedKey = ExtractNestedKey<DefKey>,
+> = Record<'_def', readonly [...ParentKeys, NestedKey]> & {
+  [P in keyof Factory]: Factory[P] extends KeyWithArgumentsOrNestedKeys
+    ? FactoryOutputCallback<[...ParentKeys, NestedKey, P], Factory[P]>
+    : Factory[P] extends FactoryProperty
+    ? FactoryPropertyKey<[...ParentKeys, NestedKey, P], Factory[P]>
+    : never;
+};
+
 type FactoryOutputCallback<
-  Key,
-  Property,
-  Callback extends FactoryCallback,
+  Keys extends any[],
+  Callback extends KeyWithArgumentsOrNestedKeys,
   CallbackResult extends ReturnType<Callback> = ReturnType<Callback>,
 > = {
   (...args: Parameters<Callback>): CallbackResult extends [...infer TupleResult]
-    ? readonly [Key, Property, ...TupleResult]
-    : CallbackResult extends AnyObject
-    ? readonly [
-        Key,
-        Property,
-        {
-          [SubKey in keyof CallbackResult]: CallbackResult[SubKey];
-        },
-      ]
-    : readonly [Key, Property, CallbackResult];
-  _def: readonly [Key, Property];
+    ? readonly [...Keys, ...TupleResult]
+    : CallbackResult extends readonly [...infer TupleResult]
+    ? readonly [...Keys, ...TupleResult]
+    : CallbackResult extends NestedKeySchema
+    ? FactoryNestedKeyOutput<Keys, CallbackResult>
+    : never;
+  _def: readonly [...Keys];
 };
 
-export type AnyFactoryOutputCallback<Key extends string = string> = FactoryOutputCallback<Key, string, FactoryCallback>;
+export type AnyFactoryOutputCallback = FactoryOutputCallback<[string, ...any[]], KeyWithArgumentsOrNestedKeys>;
 
-type FactoryOutput<Key extends string, FactorySchema extends FactoryObject> = {
-  [P in keyof FactorySchema]: FactorySchema[P] extends FactoryCallback
-    ? FactoryOutputCallback<Key, P, FactorySchema[P]>
-    : FactorySchema[P] extends null
-    ? readonly [Key, P]
-    : readonly [Key, P, FactorySchema[P]];
+type FactoryPropertyKey<Keys extends any[], Value extends FactoryProperty> = Value extends null
+  ? readonly [...Keys]
+  : Value extends [...infer Result]
+  ? readonly [...Keys, ...Result]
+  : Value extends readonly [...infer Result]
+  ? readonly [...Keys, ...Result]
+  : never;
+
+type FactoryOutput<Key extends string, Schema extends FactorySchema> = {
+  [P in keyof Schema]: Schema[P] extends KeyWithArgumentsOrNestedKeys
+    ? FactoryOutputCallback<[Key, P], Schema[P]>
+    : Schema[P] extends FactoryProperty
+    ? FactoryPropertyKey<[Key, P], Schema[P]>
+    : never;
 };
 
 export type DefinitionKey<Key extends string> = {
   _def: readonly [Key];
 };
 
-export type QueryKeyFactoryResult<Key extends string, FactorySchema extends FactoryObject> = DefinitionKey<Key> &
-  FactoryOutput<Key, FactorySchema>;
+export type QueryKeyFactoryResult<Key extends string, Schema extends FactorySchema> = DefinitionKey<Key> &
+  FactoryOutput<Key, Schema>;
 
 export type AnyQueryKeyFactoryResult = DefinitionKey<string> | QueryKeyFactoryResult<string, any>;
 
-export type inferQueryKeys<FactorySchema extends AnyQueryKeyFactoryResult> = {
-  [P in keyof FactorySchema]: FactorySchema[P] extends (...args: any[]) => readonly any[]
-    ? ReturnType<FactorySchema[P]>
-    : FactorySchema[P];
+export type inferQueryKeys<Schema extends AnyQueryKeyFactoryResult> = {
+  [P in keyof Schema]: Schema[P] extends (...args: any[]) => readonly any[] ? ReturnType<Schema[P]> : Schema[P];
 };
 
 export type StoreFromMergedQueryKeys<
@@ -74,12 +99,12 @@ export type StoreFromMergedQueryKeys<
       [P in QueryKeyFactoryResults[Index]['_def'][0]]: QueryKeyFactoryResults[Index];
     } & StoreFromMergedQueryKeys<QueryKeyFactoryResults, Add<Index, 1>>;
 
-export type QueryKeyStoreSchema = Record<string, null | FactoryObject>;
+export type QueryKeyStoreSchema = Record<string, null | FactorySchema>;
 
 export type QueryKeyStore<StoreSchema extends QueryKeyStoreSchema> = {
-  [P in keyof StoreSchema]: StoreSchema[P] extends FactoryObject
-    ? QueryKeyFactoryResult<`${string & P}`, StoreSchema[P]>
-    : DefinitionKey<`${string & P}`>;
+  [P in keyof StoreSchema]: StoreSchema[P] extends FactorySchema
+    ? QueryKeyFactoryResult<string & P, StoreSchema[P]>
+    : DefinitionKey<string & P>;
 };
 
 export type inferQueryKeyStore<Store extends QueryKeyStore<any>> = {

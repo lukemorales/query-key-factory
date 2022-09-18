@@ -1,3 +1,9 @@
+declare global {
+  interface ArrayConstructor {
+    isArray(arg: readonly any[] | any): arg is readonly any[];
+  }
+}
+
 /**
  * @internal
  */

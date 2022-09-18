@@ -28,24 +28,24 @@ describe('createQueryKeys', () => {
       expect(() =>
         createQueryKeys('users', {
           // @ts-expect-error: "_def" should not be an allowed key
-          _def: 'trying to override the _def key value',
-          role: 'admin',
+          _def: ['trying to override the _def key value'],
+          role: ['admin'],
         }),
       ).toThrow('Keys that start with "_" are reserved for the Query Key Factory');
 
       expect(() =>
         createQueryKeys('users', {
           // @ts-expect-error: "_my_own_thing" should not be an allowed key
-          _my_own_thing: 'trying to create with the shape of an internal key',
-          role: 'admin',
+          _my_own_thing: ['trying to create with the shape of an internal key'],
+          role: ['admin'],
         }),
       ).toThrow('Keys that start with "_" are reserved for the Query Key Factory');
     });
 
     it('creates a store that contains the "_def" key and the schema', () => {
       const queryKeys = createQueryKeys('todos', {
-        status: 'open',
-        priority: 'high',
+        status: ['open'] as const,
+        priority: ['high'],
       });
 
       expect(queryKeys).toHaveProperty('_def');
@@ -71,7 +71,7 @@ describe('createQueryKeys', () => {
 
       it('creates an array in the shape [key, schema.property, value] if the value is not NULL', () => {
         const queryKeys = createQueryKeys('users', {
-          role: 'admin',
+          role: ['admin'],
         });
 
         expect(queryKeys.role).toHaveLength(3);
@@ -84,7 +84,7 @@ describe('createQueryKeys', () => {
       describe('when the function returns a primitive', () => {
         it('creates a callback that returns a formatted query key', () => {
           const queryKeys = createQueryKeys('todos', {
-            todo: (id: string) => id,
+            todo: (id: string) => [id],
           });
 
           expect(typeof queryKeys.todo).toBe('function');
@@ -100,7 +100,7 @@ describe('createQueryKeys', () => {
       describe('when the function returns an object', () => {
         it('creates a callback that returns a formatted query key', () => {
           const queryKeys = createQueryKeys('todos', {
-            todo: (id: string, preview: boolean) => ({ id, preview }),
+            todo: (id: string, preview: boolean) => [{ id, preview }],
           });
 
           expect(typeof queryKeys.todo).toBe('function');
@@ -156,7 +156,7 @@ describe('createQueryKeys', () => {
 
       it('exposes a "_def" property that returns [key, schema.property]', () => {
         const queryKeys = createQueryKeys('todos', {
-          todo: (id: string) => id,
+          todo: (id: string) => [id],
         });
 
         expect(queryKeys.todo).toHaveProperty('_def');

@@ -1,24 +1,22 @@
 import { omitPrototype } from './internals';
 import type {
   DefinitionKey,
-  FactoryObject,
-  KeyScopeTuple,
-  KeyScopeValue,
+  FactorySchema,
   QueryKeyFactoryResult,
   ValidateFactory,
   AnyFactoryOutputCallback,
+  AnyQueryKey,
 } from './types';
 
 export function createQueryKeys<Key extends string>(queryDef: Key): DefinitionKey<Key>;
-export function createQueryKeys<Key extends string, FactorySchema extends FactoryObject>(
+export function createQueryKeys<Key extends string, Schema extends FactorySchema>(
   queryDef: Key,
-  schema: ValidateFactory<FactorySchema>,
-): QueryKeyFactoryResult<Key, ValidateFactory<FactorySchema>>;
-
-export function createQueryKeys<Key extends string, FactorySchema extends FactoryObject>(
+  schema: ValidateFactory<Schema>,
+): QueryKeyFactoryResult<Key, ValidateFactory<Schema>>;
+export function createQueryKeys<Key extends string, Schema extends FactorySchema>(
   queryDef: Key,
-  schema?: ValidateFactory<FactorySchema>,
-): DefinitionKey<Key> | QueryKeyFactoryResult<Key, ValidateFactory<FactorySchema>> {
+  schema?: ValidateFactory<Schema>,
+): DefinitionKey<Key> | QueryKeyFactoryResult<Key, ValidateFactory<Schema>> {
   const defKey: DefinitionKey<Key> = {
     _def: [queryDef] as const,
   };
@@ -27,74 +25,58 @@ export function createQueryKeys<Key extends string, FactorySchema extends Factor
     return omitPrototype(defKey);
   }
 
-  const schemaKeys = assertSchemaKeys(schema);
+  const transformSchema = (targetSchema: FactorySchema, mainKey: AnyQueryKey) => {
+    const keys = assertSchemaKeys(targetSchema);
 
-  function createKey<Scope extends string>(scope: Scope): readonly [Key, Scope];
-  function createKey<Scope extends string, Value extends KeyScopeValue>(
-    scope: Scope,
-    value: Value,
-  ): readonly [Key, Scope, Value];
-  function createKey<Scope extends string, Value extends KeyScopeTuple>(
-    scope: Scope,
-    value: Value,
-  ): readonly [Key, Scope, ...Value];
+    return keys.reduce((factoryMap, factoryKey) => {
+      const value = targetSchema[factoryKey];
+      const key = [...mainKey, factoryKey] as const;
 
-  function createKey<Scope extends string, Value extends KeyScopeValue | KeyScopeTuple>(
-    scope: Scope,
-    value?: Value,
-  ): readonly [Key, Scope] | readonly [Key, Scope, Value] | readonly [Key, Scope, ...KeyScopeTuple[]] {
-    if (value != null) {
-      if (Array.isArray(value)) {
-        return [queryDef, scope, ...value] as const;
+      let yieldValue: any;
+
+      if (typeof value === 'function') {
+        const resultCallback: AnyFactoryOutputCallback = (...args) => {
+          const result = value(...args);
+
+          if (Array.isArray(result)) {
+            return [...key, ...result] as const;
+          }
+
+          const innerKey = [...key, ...result.def] as const;
+
+          const transformedSchema = transformSchema(result.keys, innerKey);
+
+          return omitPrototype({
+            ...omitPrototype(Object.fromEntries(transformedSchema)),
+            _def: innerKey,
+          });
+        };
+
+        resultCallback._def = key;
+
+        yieldValue = resultCallback;
+      } else if (value != null) {
+        yieldValue = [...key, ...value] as const;
+      } else {
+        yieldValue = key;
       }
 
-      return [queryDef, scope, value] as const;
-    }
+      factoryMap.set(factoryKey, yieldValue);
+      return factoryMap;
+    }, new Map());
+  };
 
-    return [queryDef, scope] as const;
-  }
-
-  const factory = schemaKeys.reduce((factoryMap, key) => {
-    const currentValue = schema[key];
-
-    let yieldValue: any;
-
-    if (typeof currentValue === 'function') {
-      type $ResultCallback = AnyFactoryOutputCallback<Key>;
-
-      const resultCallback: $ResultCallback = (...args) => {
-        const result = currentValue(...args);
-
-        /**
-         * Array check is necessary so that the correct
-         * createKey overload is called
-         */
-        if (Array.isArray(result)) {
-          return createKey(key, result);
-        }
-
-        return createKey(key, result);
-      };
-
-      resultCallback._def = [queryDef, key] as const;
-
-      yieldValue = resultCallback;
-    } else if (currentValue != null) {
-      yieldValue = createKey(key, currentValue);
-    } else {
-      yieldValue = createKey(key);
-    }
-
-    factoryMap.set(key, yieldValue);
-    return factoryMap;
-  }, new Map());
+  const transformedSchema = transformSchema(schema, defKey._def);
 
   return omitPrototype({
-    ...Object.fromEntries(factory),
+    ...Object.fromEntries(transformedSchema),
     ...defKey,
   });
 }
 
+/**
+ * @internal
+ */
 const assertSchemaKeys = (schema: Record<string, unknown>): string[] => {
   const keys = Object.keys(schema).sort((a, b) => a.localeCompare(b));
 
