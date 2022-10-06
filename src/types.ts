@@ -11,27 +11,52 @@ export type KeyTuple = Tuple | Readonly<Tuple>;
 
 export type ValidValue = string | number | boolean | AnyObject;
 
-type DynamicKey = (
-  ...args: any[]
-) => KeySchemaWithQueries | QueryFactorySchema | QueryFactoryWithQueriesSchema | KeyTuple;
-
-type KeySchemaWithQueries = {
-  def: readonly [ValidValue] | null;
-  queries: FactorySchema;
+type KeySchemaWithContextualQueries = {
+  queryKey?: readonly [ValidValue] | null;
+  context: FactorySchema;
 };
 
 type QueryFactorySchema = {
-  def: readonly [ValidValue] | null;
+  queryKey?: readonly [ValidValue] | null;
   queryFn: QueryFunction;
 };
 
-type QueryFactoryWithQueriesSchema = {
-  def: readonly [ValidValue] | null;
+type QueryFactoryWithContextualQueriesSchema = {
+  queryKey?: readonly [ValidValue] | null;
   queryFn: QueryFunction;
-  queries: FactorySchema;
+  context: FactorySchema;
 };
 
-type FactoryProperty = null | KeyTuple | KeySchemaWithQueries | QueryFactorySchema | QueryFactoryWithQueriesSchema;
+type DynamicKeySchemaWithContextualQueries = {
+  queryKey: readonly [ValidValue];
+  context: FactorySchema;
+};
+
+type DynamicQueryFactorySchema = {
+  queryKey: readonly [ValidValue];
+  queryFn: QueryFunction;
+};
+
+type DynamicQueryFactoryWithContextualQueriesSchema = {
+  queryKey: readonly [ValidValue];
+  queryFn: QueryFunction;
+  context: FactorySchema;
+};
+
+type FactoryProperty =
+  | null
+  | KeyTuple
+  | KeySchemaWithContextualQueries
+  | QueryFactorySchema
+  | QueryFactoryWithContextualQueriesSchema;
+
+type DynamicKey = (
+  ...args: any[]
+) =>
+  | DynamicQueryFactoryWithContextualQueriesSchema
+  | DynamicQueryFactorySchema
+  | DynamicKeySchemaWithContextualQueries
+  | KeyTuple;
 
 export type FactorySchema = Record<string, FactoryProperty | DynamicKey>;
 
@@ -43,112 +68,112 @@ export type ValidateFactory<Schema extends FactorySchema> = Schema extends {
   ? InvalidSchema<Schema>
   : Schema;
 
-type ExtractNestedKey<Key extends readonly [ValidValue] | null> = Key extends [infer Value] | readonly [infer Value]
+type ExtractNullableKey<Key extends readonly [ValidValue] | null | undefined> = Key extends
+  | [infer Value]
+  | readonly [infer Value]
   ? Value
-  : Key extends null
+  : Key extends null | undefined
   ? null
   : never;
 
-export type CallbackContext<
-  Keys extends AnyMutableOrReadonlyArray | readonly any[],
-  QueryFn extends QueryFunction,
-  QueryFnReturn extends ReturnType<QueryFn> = ReturnType<QueryFn>,
+type ComposeQueryKey<BaseKey extends AnyMutableOrReadonlyArray, Key> = Key extends ValidValue
+  ? readonly [...BaseKey, Key]
+  : readonly [...BaseKey];
+
+export type QueryOptions<
+  Keys extends AnyMutableOrReadonlyArray,
+  Fetcher extends QueryFunction,
+  FetcherResult extends ReturnType<Fetcher> = ReturnType<Fetcher>,
 > = {
-  queryFn: QueryFunction<Awaited<QueryFnReturn>, Keys>;
-  queryOptions: {
-    queryKey: readonly [...Keys];
-    queryFn: QueryFunction<Awaited<QueryFnReturn>, Keys>;
+  queryKey: readonly [...Keys];
+  queryFn: QueryFunction<Awaited<FetcherResult>, Keys>;
+};
+
+type FactoryWithContextualQueriesOutput<
+  BaseKey extends AnyMutableOrReadonlyArray,
+  Schema extends KeySchemaWithContextualQueries | DynamicKeySchemaWithContextualQueries,
+  SchemaQueryKey extends Schema['queryKey'] = Schema['queryKey'],
+  ContextFactory extends Schema['context'] = Schema['context'],
+  ComposedKey extends AnyMutableOrReadonlyArray = ComposeQueryKey<BaseKey, ExtractNullableKey<SchemaQueryKey>>,
+> = Omit<QueryOptions<ComposedKey, QueryFunction>, 'queryFn'> & {
+  _def: readonly [...BaseKey];
+  _ctx: {
+    [P in keyof ContextFactory]: ContextFactory[P] extends DynamicKey
+      ? DynamicFactoryOutput<[...ComposedKey, P], ContextFactory[P]>
+      : ContextFactory[P] extends FactoryProperty
+      ? StaticFactoryOutput<[...ComposedKey, P], ContextFactory[P]>
+      : never;
   };
 };
 
-type FactorySubQueriesKeyOutput<
-  ParentKeys extends AnyMutableOrReadonlyArray,
-  Schema extends KeySchemaWithQueries,
-  SchemaDefKey extends Schema['def'] = Schema['def'],
-  Factory extends Schema['queries'] = Schema['queries'],
-  Key = ExtractNestedKey<SchemaDefKey>,
-  DefKey extends AnyMutableOrReadonlyArray = ComposeSubQueryKey<ParentKeys, Key>,
-> = { _def: DefKey } & {
-  [P in keyof Factory]: Factory[P] extends DynamicKey
-    ? FactoryOutputCallback<[...DefKey, P], Factory[P]>
-    : Factory[P] extends FactoryProperty
-    ? FactoryPropertyKey<[...DefKey, P], Factory[P]>
-    : never;
-};
-
 type FactoryQueryOptionsOutput<
-  ParentKeys extends AnyMutableOrReadonlyArray,
-  Schema extends QueryFactorySchema,
-  SchemaDefKey extends Schema['def'] = Schema['def'],
+  BaseKey extends AnyMutableOrReadonlyArray,
+  Schema extends QueryFactorySchema | DynamicQueryFactorySchema,
+  SchemaQueryKey extends Schema['queryKey'] = Schema['queryKey'],
   QueryFn extends Schema['queryFn'] = Schema['queryFn'],
-  Key = ExtractNestedKey<SchemaDefKey>,
-  DefKey extends AnyMutableOrReadonlyArray = ComposeSubQueryKey<ParentKeys, Key>,
-> = {
-  _def: DefKey;
-  _ctx: CallbackContext<DefKey, QueryFn>;
+  ComposedKey extends AnyMutableOrReadonlyArray = ComposeQueryKey<BaseKey, ExtractNullableKey<SchemaQueryKey>>,
+> = QueryOptions<ComposedKey, QueryFn> & {
+  _def: readonly [...BaseKey];
 };
 
 type AnyMutableOrReadonlyArray = any[] | readonly any[];
 
-type ComposeSubQueryKey<ParentKeys extends AnyMutableOrReadonlyArray, Key> = Key extends ValidValue
-  ? readonly [...ParentKeys, Key]
-  : readonly [...ParentKeys];
-
-type FactoryQueryOptionsWithNestedKeysOutput<
-  ParentKeys extends AnyMutableOrReadonlyArray,
-  Schema extends QueryFactoryWithQueriesSchema,
-  SchemaDefKey extends Schema['def'] = Schema['def'],
+type FactoryQueryOptionsWithContextualQueriesOutput<
+  BaseKey extends AnyMutableOrReadonlyArray,
+  Schema extends QueryFactoryWithContextualQueriesSchema | DynamicQueryFactoryWithContextualQueriesSchema,
+  SchemaQueryKey extends Schema['queryKey'] = Schema['queryKey'],
   QueryFn extends Schema['queryFn'] = Schema['queryFn'],
-  Factory extends Schema['queries'] = Schema['queries'],
-  Key = ExtractNestedKey<SchemaDefKey>,
-  DefKey extends AnyMutableOrReadonlyArray = ComposeSubQueryKey<ParentKeys, Key>,
-> = {
-  _def: DefKey;
-  _ctx: CallbackContext<DefKey, QueryFn>;
-} & {
-  [P in keyof Factory]: Factory[P] extends DynamicKey
-    ? FactoryOutputCallback<[...DefKey, P], Factory[P]>
-    : Factory[P] extends FactoryProperty
-    ? FactoryPropertyKey<[...DefKey, P], Factory[P]>
-    : never;
+  ContextFactory extends Schema['context'] = Schema['context'],
+  Key extends AnyMutableOrReadonlyArray = ComposeQueryKey<BaseKey, ExtractNullableKey<SchemaQueryKey>>,
+> = QueryOptions<Key, QueryFn> & {
+  _def: readonly [...BaseKey];
+  _ctx: {
+    [P in keyof ContextFactory]: ContextFactory[P] extends DynamicKey
+      ? DynamicFactoryOutput<[...Key, P], ContextFactory[P]>
+      : ContextFactory[P] extends FactoryProperty
+      ? StaticFactoryOutput<[...Key, P], ContextFactory[P]>
+      : never;
+  };
 };
 
-type FactoryOutputCallback<
+type DynamicFactoryOutput<
   Keys extends AnyMutableOrReadonlyArray,
-  Callback extends DynamicKey,
-  CallbackResult extends ReturnType<Callback> = ReturnType<Callback>,
+  Generator extends DynamicKey,
+  GeneratorOutput extends ReturnType<Generator> = ReturnType<Generator>,
 > = {
-  (...args: Parameters<Callback>): CallbackResult extends [...infer TupleResult] | readonly [...infer TupleResult]
-    ? readonly [...Keys, ...TupleResult]
-    : CallbackResult extends QueryFactoryWithQueriesSchema
-    ? FactoryQueryOptionsWithNestedKeysOutput<Keys, CallbackResult>
-    : CallbackResult extends QueryFactorySchema
-    ? FactoryQueryOptionsOutput<Keys, CallbackResult>
-    : CallbackResult extends KeySchemaWithQueries
-    ? FactorySubQueriesKeyOutput<Keys, CallbackResult>
+  (...args: Parameters<Generator>): GeneratorOutput extends [...infer TupleResult] | readonly [...infer TupleResult]
+    ? Omit<QueryOptions<[...Keys, ...TupleResult], QueryFunction>, 'queryFn'>
+    : GeneratorOutput extends DynamicQueryFactoryWithContextualQueriesSchema
+    ? FactoryQueryOptionsWithContextualQueriesOutput<Keys, GeneratorOutput>
+    : GeneratorOutput extends DynamicQueryFactorySchema
+    ? FactoryQueryOptionsOutput<Keys, GeneratorOutput>
+    : GeneratorOutput extends DynamicKeySchemaWithContextualQueries
+    ? FactoryWithContextualQueriesOutput<Keys, GeneratorOutput>
     : never;
-  _def: readonly [...Keys];
-};
+} & { _def: readonly [...Keys] };
 
-export type AnyFactoryOutputCallback = FactoryOutputCallback<[string, ...any[]], DynamicKey>;
+export type AnyFactoryOutputCallback = DynamicFactoryOutput<[string, ...any[]], DynamicKey>;
 
-type FactoryPropertyKey<Keys extends AnyMutableOrReadonlyArray, Value extends FactoryProperty> = Value extends null
-  ? readonly [...Keys]
-  : Value extends [...infer Result] | readonly [...infer Result]
-  ? readonly [...Keys, ...Result]
-  : Value extends QueryFactoryWithQueriesSchema
-  ? FactoryQueryOptionsWithNestedKeysOutput<Keys, Value>
-  : Value extends QueryFactorySchema
-  ? FactoryQueryOptionsOutput<Keys, Value>
-  : Value extends KeySchemaWithQueries
-  ? FactorySubQueriesKeyOutput<Keys, Value>
+type StaticFactoryOutput<
+  Keys extends AnyMutableOrReadonlyArray,
+  Property extends FactoryProperty,
+> = Property extends null
+  ? Omit<QueryOptions<Keys, QueryFunction>, 'queryFn'>
+  : Property extends [...infer Result] | readonly [...infer Result]
+  ? Omit<QueryOptions<[...Keys, ...Result], QueryFunction>, 'queryFn'>
+  : Property extends QueryFactoryWithContextualQueriesSchema
+  ? FactoryQueryOptionsWithContextualQueriesOutput<Keys, Property>
+  : Property extends QueryFactorySchema
+  ? FactoryQueryOptionsOutput<Keys, Property>
+  : Property extends KeySchemaWithContextualQueries
+  ? FactoryWithContextualQueriesOutput<Keys, Property>
   : never;
 
 type FactoryOutput<Key extends string, Schema extends FactorySchema> = {
   [P in keyof Schema]: Schema[P] extends DynamicKey
-    ? FactoryOutputCallback<[Key, P], Schema[P]>
+    ? DynamicFactoryOutput<[Key, P], Schema[P]>
     : Schema[P] extends FactoryProperty
-    ? FactoryPropertyKey<[Key, P], Schema[P]>
+    ? StaticFactoryOutput<[Key, P], Schema[P]>
     : never;
 };
 
@@ -167,12 +192,12 @@ export type inferQueryKeys<Schema extends AnyQueryKeyFactoryResult> = {
 
 export type StoreFromMergedQueryKeys<
   QueryKeyFactoryResults extends AnyQueryKeyFactoryResult[],
-  Index extends number = 0,
-> = QueryKeyFactoryResults[Index] extends null | undefined
+  CurrentIndex extends number = 0,
+> = QueryKeyFactoryResults[CurrentIndex] extends null | undefined
   ? {}
   : {
-      [P in QueryKeyFactoryResults[Index]['_def'][0]]: QueryKeyFactoryResults[Index];
-    } & StoreFromMergedQueryKeys<QueryKeyFactoryResults, Add<Index, 1>>;
+      [P in QueryKeyFactoryResults[CurrentIndex]['_def'][0]]: QueryKeyFactoryResults[CurrentIndex];
+    } & StoreFromMergedQueryKeys<QueryKeyFactoryResults, Add<CurrentIndex, 1>>;
 
 export type QueryKeyStoreSchema = Record<string, null | FactorySchema>;
 
