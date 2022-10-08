@@ -1,8 +1,6 @@
 name: CI
 
-on:
-  pull_request:
-    branches: ["*"]
+on: [pull_request]
 
 jobs:
   install-deps:
@@ -12,11 +10,16 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Install PNPM
+        uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 7
+
       - uses: actions/cache@v3
-        id: yarn-cache
+        id: pnpm-cache
         with:
           path: "**/node_modules"
-          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-node-
 
@@ -25,10 +28,10 @@ jobs:
         with:
           node-version: '14'
           check-latest: true
-          cache: 'yarn'
+          cache: 'pnpm'
 
-        if: steps.yarn-cache.outputs.cache-hit != 'true'
-      - run: yarn install --frozen-lockfile
+        if: steps.pnpm-cache.outputs.cache-hit != 'true'
+      - run: pnpm install --prefer-offline
 
   lint:
     runs-on: ubuntu-latest
@@ -36,11 +39,15 @@ jobs:
     needs: install-deps
     steps:
       - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 7
+
       - name: Load node_modules
         uses: actions/cache@v3
         with:
           path: "**/node_modules"
-          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: Restore ESLint Cache
         uses: actions/cache@v3
@@ -54,10 +61,10 @@ jobs:
         with:
           node-version: '14'
           check-latest: true
-          cache: 'yarn'
-      - run: yarn lint
+          cache: 'pnpm'
+      - run: pnpm lint
 
-  lint-pr:
+  lint-pr-title:
     runs-on: ubuntu-latest
     name: Lint the Pull Request Title 🚨
     needs: install-deps

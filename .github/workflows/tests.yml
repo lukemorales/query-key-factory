@@ -1,4 +1,4 @@
-name: Tests
+name: tests
 
 on:
   push:
@@ -14,10 +14,10 @@ jobs:
 
       - name: Caching node_modules
         uses: actions/cache@v3
-        id: yarn-cache
+        id: pnpm-cache
         with:
           path: "**/node_modules"
-          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-node-
 
@@ -26,11 +26,11 @@ jobs:
         with:
           node-version: '14'
           check-latest: true
-          cache: 'yarn'
+          cache: 'pnpm'
 
       - name: Install dependencies 🔧
-        if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: yarn install --frozen-lockfile
+        if: steps.pnpm-cache.outputs.cache-hit != 'true'
+        run: pnpm install --prefer-offline
 
       - name: Test package 🔧
-        run: yarn test:ci
+        run: pnpm run test:ci
