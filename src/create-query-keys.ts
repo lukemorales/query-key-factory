@@ -8,7 +8,7 @@ import type {
   AnyQueryKey,
 } from './types';
 
-export function createQueryKeys<Key extends string>(queryDef: Key): DefinitionKey<Key>;
+export function createQueryKeys<Key extends string>(queryDef: Key): DefinitionKey<[Key]>;
 export function createQueryKeys<Key extends string, Schema extends FactorySchema>(
   queryDef: Key,
   schema: ValidateFactory<Schema>,
@@ -16,8 +16,8 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
 export function createQueryKeys<Key extends string, Schema extends FactorySchema>(
   queryDef: Key,
   schema?: ValidateFactory<Schema>,
-): DefinitionKey<Key> | QueryKeyFactoryResult<Key, Schema> {
-  const defKey: DefinitionKey<Key> = {
+): DefinitionKey<[Key]> | QueryKeyFactoryResult<Key, Schema> {
+  const defKey: DefinitionKey<[Key]> = {
     _def: [queryDef] as const,
   };
 
@@ -40,7 +40,6 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
 
           if (Array.isArray(result)) {
             return omitPrototype({
-              _def: key,
               queryKey: [...key, ...result] as const,
             });
           }
@@ -59,14 +58,12 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
               const transformedSchema = transformSchema(result.context, innerKey);
 
               return omitPrototype({
-                _def: key,
                 _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
-                ...omitPrototype(queryOptions),
+                ...queryOptions,
               });
             }
 
             return omitPrototype({
-              _def: key,
               ...queryOptions,
             });
           }
@@ -74,7 +71,6 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
           const transformedSchema = transformSchema(result.context, innerKey);
 
           return omitPrototype({
-            _def: key,
             _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
             queryKey: innerKey,
           });
@@ -95,30 +91,35 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
       } else if ('queryFn' in value) {
         // type $QueryFnContext = Omit<QueryFunctionContext<typeof innerKey, any>, 'queryKey'>;
 
+        const innerDefKey = { ...(value.queryKey ? { _def: key } : undefined) };
         const innerKey = [...key, ...(value.queryKey ?? [])] as const;
 
-        const queryOptions = omitPrototype({
+        const queryOptions = {
           queryKey: innerKey,
           queryFn: value.queryFn,
-        });
+        };
 
         if ('context' in value) {
           const transformedSchema = transformSchema(value.context, innerKey);
 
           yieldValue = omitPrototype({
             _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
+            ...innerDefKey,
             ...queryOptions,
           });
         } else {
-          yieldValue = omitPrototype(queryOptions);
+          yieldValue = omitPrototype({ ...innerDefKey, ...queryOptions });
         }
       } else {
+        const innerDefKey = { ...(value.queryKey ? { _def: key } : undefined) };
         const innerKey = [...key, ...(value.queryKey ?? [])] as const;
+
         const transformedSchema = transformSchema(value.context, innerKey);
 
         yieldValue = omitPrototype({
           _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
           queryKey: innerKey,
+          ...innerDefKey,
         });
       }
 
