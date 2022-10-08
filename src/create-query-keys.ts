@@ -25,9 +25,10 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
     return omitPrototype(defKey);
   }
 
-  const transformSchema = (factory: FactorySchema, mainKey: AnyQueryKey) => {
-    const keys = assertSchemaKeys(factory);
+  const transformSchema = <$Factory extends FactorySchema>(factory: $Factory, mainKey: AnyQueryKey) => {
+    type $FactoryProperty = keyof $Factory;
 
+    const keys = assertSchemaKeys(factory);
     return keys.reduce((factoryMap, factoryKey) => {
       const value = factory[factoryKey];
       const key = [...mainKey, factoryKey] as const;
@@ -125,7 +126,7 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
 
       factoryMap.set(factoryKey, yieldValue);
       return factoryMap;
-    }, new Map());
+    }, new Map<$FactoryProperty, $Factory[$FactoryProperty]>());
   };
 
   const transformedSchema = transformSchema(schema, defKey._def);

@@ -5,6 +5,8 @@ type AnyObject = Record<string, unknown>;
 
 export type AnyQueryKey = readonly [string, ...any[]];
 
+type AnyMutableOrReadonlyArray = any[] | readonly any[];
+
 type Tuple = [ValidValue, ...Array<ValidValue | undefined>];
 
 export type KeyTuple = Tuple | Readonly<Tuple>;
@@ -125,8 +127,6 @@ type FactoryQueryOptionsOutput<
 > = SchemaQueryKey extends null
   ? QueryOptions<BaseKey, QueryFn>
   : QueryOptions<ComposedKey, QueryFn> & DefinitionKey<BaseKey>;
-
-type AnyMutableOrReadonlyArray = any[] | readonly any[];
 
 type FactoryQueryOptionsWithContextualQueriesOutput<
   BaseKey extends AnyMutableOrReadonlyArray,
