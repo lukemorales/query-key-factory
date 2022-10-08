@@ -1,6 +1,9 @@
 {
   "name": "@lukemorales/query-key-factory",
   "version": "0.6.1",
+  "author": "Luke Morales <lukemorales@live.com>",
+  "description": "A library for creating standardized query keys, useful for cache management in @tanstack/query",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/lukemorales/query-key-factory.git"
@@ -8,9 +11,6 @@
   "bugs": {
     "url": "https://github.com/lukemorales/query-key-factory/issues"
   },
-  "author": "Luke Morales <lukemorales@live.com>",
-  "description": "A library for creating standardized query keys, useful for cache management in @tanstack/query",
-  "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "typings": "dist/index.d.ts",
@@ -39,6 +39,7 @@
     "@changesets/cli": "^2.24.4",
     "@commitlint/cli": "^17.1.2",
     "@commitlint/config-conventional": "^17.1.0",
+    "@lukemorales/jest-type-matchers": "^0.2.1",
     "@types/node": "^18.8.3",
     "@typescript-eslint/eslint-plugin": "5.36.2",
     "@typescript-eslint/parser": "5.36.2",
