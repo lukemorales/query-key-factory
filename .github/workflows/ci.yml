@@ -1,8 +1,16 @@
-name: CI
+name: ci
 
 on: [pull_request]
 
 jobs:
+  lint-title:
+    runs-on: ubuntu-latest
+    name: 🚨 Lint Pull Request title
+    steps:
+      - uses: amannn/action-semantic-pull-request@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   install-deps:
     runs-on: ubuntu-latest
     name: 📦 Install dependencies
@@ -15,7 +23,8 @@ jobs:
         with:
           version: 7
 
-      - uses: actions/cache@v3
+      - name: ♻️ Cache node_modules
+        uses: actions/cache@v3
         id: pnpm-cache
         with:
           path: "**/node_modules"
@@ -33,17 +42,20 @@ jobs:
         if: steps.pnpm-cache.outputs.cache-hit != 'true'
       - run: pnpm install --prefer-offline
 
-  lint:
+  lint-package:
     runs-on: ubuntu-latest
     name: 🚨 Check for errors
     needs: install-deps
     steps:
-      - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2.2.2
+      - name: 🔑 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🔧 Install PNPM
+        uses: pnpm/action-setup@v2.2.2
         with:
           version: 7
 
-      - name: ♻️ Load node_modules
+      - name: ♻️ Restore node_modules
         uses: actions/cache@v3
         with:
           path: "**/node_modules"
@@ -56,19 +68,82 @@ jobs:
           path: .eslintcache
           key: ${{ matrix.os }}-eslint-${{ hashFiles('**/*.ts', 'package.json', 'tsconfig.json') }}
 
-
-      - uses: actions/setup-node@v3
+      - name: 🛠️ Setup Node
+        uses: actions/setup-node@v3
         with:
           node-version: '14'
           check-latest: true
           cache: 'pnpm'
-      - run: pnpm lint
 
-  lint-pr-title:
+      - name: 📦 Install dependencies
+        if: steps.pnpm-cache.outputs.cache-hit != 'true'
+        run: pnpm install --prefer-offline
+
+      - name: 🚨 Lint files
+        run: pnpm run lint
+
+  tests:
+    name: 🧪 Test package
     runs-on: ubuntu-latest
-    name: 🚨 Lint Pull Request title
     needs: install-deps
     steps:
-      - uses: amannn/action-semantic-pull-request@v4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 🔑 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🔧 Install PNPM
+        uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 7
+
+      - name: ♻️ Restore node_modules
+        uses: actions/cache@v3
+        with:
+          path: "**/node_modules"
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+      - name: 🛠️ Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+          check-latest: true
+          cache: 'pnpm'
+
+      - name: 📦 Install dependencies
+        if: steps.pnpm-cache.outputs.cache-hit != 'true'
+        run: pnpm install --prefer-offline
+
+      - name: 🧪 Run tests
+        run: pnpm run test:ci
+
+  build:
+    name: 🏗️ Build package
+    runs-on: ubuntu-latest
+    needs: install-deps
+    steps:
+      - name: 🔑 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🔧 Install PNPM
+        uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 7
+
+      - name: ♻️ Load node_modules
+        uses: actions/cache@v3
+        with:
+          path: "**/node_modules"
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+      - name: 🛠️ Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+          check-latest: true
+          cache: 'pnpm'
+
+      - name: 📦 Install dependencies
+        if: steps.pnpm-cache.outputs.cache-hit != 'true'
+        run: pnpm install --prefer-offline
+
+      - name: 🏗️ Build package
+        run: pnpm run build
