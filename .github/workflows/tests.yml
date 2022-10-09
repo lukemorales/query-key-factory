@@ -6,13 +6,18 @@ on:
       - main
 jobs:
   tests:
-    name: Building package
+    name: 🧪 Test package
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: 🔑 Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Caching node_modules
+      - name: 🔧 Install PNPM
+        uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 7
+
+      - name: ♻️ Cache node_modules
         uses: actions/cache@v3
         id: pnpm-cache
         with:
@@ -21,16 +26,51 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: Setup Node
+      - name: 🛠️ Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: '14'
           check-latest: true
           cache: 'pnpm'
 
-      - name: Install dependencies 🔧
+      - name: 📦 Install dependencies
         if: steps.pnpm-cache.outputs.cache-hit != 'true'
         run: pnpm install --prefer-offline
 
-      - name: Test package 🔧
+      - name: 🧪 Run tests
         run: pnpm run test:ci
+
+  build:
+    name: 🏗️ Build package
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔑 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🔧 Install PNPM
+        uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 7
+
+      - name: ♻️ Cache node_modules
+        uses: actions/cache@v3
+        id: pnpm-cache
+        with:
+          path: "**/node_modules"
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: 🛠️ Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+          check-latest: true
+          cache: 'pnpm'
+
+      - name: 📦 Install dependencies
+        if: steps.pnpm-cache.outputs.cache-hit != 'true'
+        run: pnpm install --prefer-offline
+
+      - name: ⚒️ Build package
+        run: pnpm run build

@@ -13,18 +13,18 @@ on:
 
 jobs:
   build:
-    name: Building package
+    name: 🏗️ Build package
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: 🔑 Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Install PNPM
+      - name: 🔧 Install PNPM
         uses: pnpm/action-setup@v2.2.2
         with:
           version: 7
 
-      - name: Caching node_modules
+      - name: ♻️ Cache node_modules
         uses: actions/cache@v3
         id: pnpm-cache
         with:
@@ -33,7 +33,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: Caching build files
+      - name: ♻️ Cache build files
         uses: actions/cache@v3
         id: build-cache
         with:
@@ -42,30 +42,30 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-build-
 
-      - name: Setup Node
+      - name: 🛠️ Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: '16.14.2'
           check-latest: true
           cache: 'pnpm'
 
-      - name: Install dependencies 🔧
+      - name: 📦 Install dependencies
         if: steps.pnpm-cache.outputs.cache-hit != 'true'
         run: pnpm install --prefer-offline
 
-      - name: Check for errors 🚨
+      - name: 🚨 Check for errors
         run: pnpm run lint
 
-      - name: Test package 🔧
+      - name: 🧪 Run tests
         run: pnpm run test:ci
 
-      - name: Build package 📦
+      - name: ⚒️ Build package
         run: pnpm run build
 
   release-npm:
     needs: build
     if: ${{ github.repository_owner == 'lukemorales' && github.event_name != 'pull_request' }}
-    name: Release to NPM
+    name: 🚀 Release to NPM
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -73,19 +73,19 @@ jobs:
         with:
           version: 7
 
-      - name: Load node_modules
+      - name: ♻️ Load node_modules
         uses: actions/cache@v3
         with:
           path: "**/node_modules"
           key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
 
-      - name: Load build files
+      - name: ♻️ Load build files
         uses: actions/cache@v3
         with:
           path: "**/dist"
           key: ${{ runner.os }}-build-${{ hashFiles('**/pnpm-lock.yaml') }}
 
-      - name: Setup Node for NPM
+      - name: 🛠️ Setup Node for NPM
         uses: actions/setup-node@v3
         with:
           node-version: '16.14.2'
@@ -93,7 +93,7 @@ jobs:
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Publish to NPM 🚀
+      - name: 🚀 Publish to NPM
         id: changesets
         uses: changesets/action@v1
         with:
@@ -105,7 +105,7 @@ jobs:
 
   release-gpr:
     needs: [build, release-npm]
-    name: Release to GitHub Package Manager
+    name: 🚀 Release to GitHub Package Manager
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -116,19 +116,19 @@ jobs:
         with:
           version: 7
 
-      - name: Load node_modules
+      - name: ♻️ Load node_modules
         uses: actions/cache@v3
         with:
           path: "**/node_modules"
           key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
 
-      - name: Load build files
+      - name: ♻️ Load build files
         uses: actions/cache@v3
         with:
           path: "**/dist"
           key: ${{ runner.os }}-build-${{ hashFiles('**/pnpm-lock.yaml') }}
 
-      - name: Setup Node for GPR
+      - name: 🛠️ Setup Node for GPR
         uses: actions/setup-node@v3
         with:
           node-version: '16.14.2'
@@ -136,7 +136,7 @@ jobs:
           cache: 'pnpm'
           registry-url: 'https://npm.pkg.github.com'
 
-      - name: Publish to GPR 🚀
-        run: pnpm run publish
+      - name: 🚀 Publish to GPR
+        run: pnpm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
