@@ -1,14 +1,25 @@
 import { createQueryKeys } from './create-query-keys';
 import { mergeQueryKeys } from './merge-query-keys';
+import { QueryFunction } from './query-context.types';
+import { inferQueryKeyStore } from './types';
 
 describe('mergeQueryKeys', () => {
-  const performSetup = () => {
-    interface Filters {
-      preview: boolean;
-      status: 'completed' | 'in-progress';
-    }
+  interface Filters {
+    preview: boolean;
+    status: 'completed' | 'in-progress';
+  }
 
-    const usersKeys = createQueryKeys('users');
+  const performSetup = () => {
+    const usersKeys = createQueryKeys('users', {
+      me: null,
+      detail: (userId: string) => ({
+        queryKey: [userId],
+        queryFn: () => Promise.resolve({ id: userId }),
+        context: {
+          settings: null,
+        },
+      }),
+    });
     const todosKeys = createQueryKeys('todos', {
       detail: (todoId: string) => [todoId],
       list: (filters: Filters) => [{ filters }],
@@ -30,5 +41,46 @@ describe('mergeQueryKeys', () => {
       users: usersKeys,
       todos: todosKeys,
     });
+
+    expect<inferQueryKeyStore<typeof store>>(store).toHaveType<{
+      users: {
+        _def: readonly ['users'];
+        me: {
+          queryKey: readonly ['users', 'me'];
+        };
+        detail: {
+          _def: readonly ['users', 'detail'];
+        } & ((userId: string) => {
+          queryKey: readonly ['users', 'detail', string];
+          queryFn: QueryFunction<{ id: string }, readonly ['users', 'detail', string]>;
+          _ctx: {
+            settings: {
+              queryKey: readonly ['users', 'detail', string, 'settings'];
+            };
+          };
+        });
+      };
+      todos: {
+        _def: readonly ['todos'];
+        detail: {
+          _def: readonly ['todos', 'detail'];
+        } & ((todoId: string) => {
+          queryKey: readonly ['todos', 'detail', string];
+        });
+        list: {
+          _def: readonly ['todos', 'list'];
+        } & ((filters: Filters) => {
+          queryKey: readonly ['todos', 'list', { filters: Filters }];
+        });
+        search: {
+          _def: readonly ['todos', 'search'];
+        } & ((
+          query: string,
+          limit: number,
+        ) => {
+          queryKey: readonly ['todos', 'search', string, number];
+        });
+      };
+    }>();
   });
 });
