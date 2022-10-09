@@ -20,6 +20,8 @@
   "scripts": {
     "build": "run-p build:*",
     "build:tsup": "tsup --dts --minify",
+    "changeset": "changeset",
+    "bump-version": "changeset version",
     "clean": "rimraf dist",
     "lint": "run-p lint:*",
     "lint:eslint": "eslint src --ext .ts",
@@ -32,6 +34,7 @@
     "test:coverage": "pnpm run test --coverage",
     "test:ui": "pnpm run test:coverage --ui",
     "prepare": "is-ci || husky install",
+    "prerelease": "run p build test:ci",
     "release": "changeset publish"
   },
   "devDependencies": {
