@@ -1,122 +1,152 @@
-import { omitPrototype, withDeprecatedApi } from './internals';
+import { omitPrototype } from './internals';
 import type {
-  DefaultKey,
   DefinitionKey,
-  FactoryObject,
-  KeyScopeTuple,
-  KeyScopeValue,
+  FactorySchema,
   QueryKeyFactoryResult,
   ValidateFactory,
   AnyFactoryOutputCallback,
+  AnyQueryKey,
 } from './types';
 
-export function createQueryKeys<Key extends string>(queryDef: Key): DefaultKey<Key>;
-export function createQueryKeys<Key extends string, FactorySchema extends FactoryObject>(
+export function createQueryKeys<Key extends string>(queryDef: Key): DefinitionKey<[Key]>;
+export function createQueryKeys<Key extends string, Schema extends FactorySchema>(
   queryDef: Key,
-  schema: ValidateFactory<FactorySchema>,
-): QueryKeyFactoryResult<Key, ValidateFactory<FactorySchema>>;
-
-export function createQueryKeys<Key extends string, FactorySchema extends FactoryObject>(
+  schema: ValidateFactory<Schema>,
+): QueryKeyFactoryResult<Key, Schema>;
+export function createQueryKeys<Key extends string, Schema extends FactorySchema>(
   queryDef: Key,
-  schema?: ValidateFactory<FactorySchema>,
-): DefaultKey<Key> | QueryKeyFactoryResult<Key, ValidateFactory<FactorySchema>> {
-  const defKey: DefinitionKey<Key> = {
+  schema?: ValidateFactory<Schema>,
+): DefinitionKey<[Key]> | QueryKeyFactoryResult<Key, Schema> {
+  const defKey: DefinitionKey<[Key]> = {
     _def: [queryDef] as const,
   };
 
   if (schema == null) {
-    /**
-     * casting to satisfy type system that still includes "default"
-     */
-    return withDeprecatedApi(omitPrototype(defKey)) as DefaultKey<Key>;
+    return omitPrototype(defKey);
   }
 
-  const schemaKeys = assertSchemaKeys(schema);
+  const transformSchema = <$Factory extends FactorySchema>(factory: $Factory, mainKey: AnyQueryKey) => {
+    type $FactoryProperty = keyof $Factory;
 
-  function createKey<Scope extends string>(scope: Scope): readonly [Key, Scope];
-  function createKey<Scope extends string, Value extends KeyScopeValue>(
-    scope: Scope,
-    value: Value,
-  ): readonly [Key, Scope, Value];
-  function createKey<Scope extends string, Value extends KeyScopeTuple>(
-    scope: Scope,
-    value: Value,
-  ): readonly [Key, Scope, ...Value];
+    const keys = assertSchemaKeys(factory);
+    return keys.reduce((factoryMap, factoryKey) => {
+      const value = factory[factoryKey];
+      const key = [...mainKey, factoryKey] as const;
 
-  function createKey<Scope extends string, Value extends KeyScopeValue | KeyScopeTuple>(
-    scope: Scope,
-    value?: Value,
-  ): readonly [Key, Scope] | readonly [Key, Scope, Value] | readonly [Key, Scope, ...KeyScopeTuple[]] {
-    if (value != null) {
-      if (Array.isArray(value)) {
-        return [queryDef, scope, ...value] as const;
+      let yieldValue: any;
+
+      if (typeof value === 'function') {
+        const resultCallback: AnyFactoryOutputCallback = (...args) => {
+          const result = value(...args);
+
+          if (Array.isArray(result)) {
+            return omitPrototype({
+              queryKey: [...key, ...result] as const,
+            });
+          }
+
+          const innerKey = [...key, ...result.queryKey] as const;
+
+          if ('queryFn' in result) {
+            // type $QueryFnContext = Omit<QueryFunctionContext<typeof innerKey, any>, 'queryKey'>;
+
+            const queryOptions = {
+              queryKey: innerKey,
+              queryFn: result.queryFn,
+            };
+
+            if ('context' in result) {
+              const transformedSchema = transformSchema(result.context, innerKey);
+
+              return omitPrototype({
+                _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
+                ...queryOptions,
+              });
+            }
+
+            return omitPrototype({
+              ...queryOptions,
+            });
+          }
+
+          const transformedSchema = transformSchema(result.context, innerKey);
+
+          return omitPrototype({
+            _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
+            queryKey: innerKey,
+          });
+        };
+
+        resultCallback._def = key;
+
+        yieldValue = resultCallback;
+      } else if (value == null) {
+        yieldValue = omitPrototype({
+          queryKey: key,
+        });
+      } else if (Array.isArray(value)) {
+        yieldValue = omitPrototype({
+          _def: key,
+          queryKey: [...key, ...value] as const,
+        });
+      } else if ('queryFn' in value) {
+        // type $QueryFnContext = Omit<QueryFunctionContext<typeof innerKey, any>, 'queryKey'>;
+
+        const innerDefKey = { ...(value.queryKey ? { _def: key } : undefined) };
+        const innerKey = [...key, ...(value.queryKey ?? [])] as const;
+
+        const queryOptions = {
+          queryKey: innerKey,
+          queryFn: value.queryFn,
+        };
+
+        if ('context' in value) {
+          const transformedSchema = transformSchema(value.context, innerKey);
+
+          yieldValue = omitPrototype({
+            _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
+            ...innerDefKey,
+            ...queryOptions,
+          });
+        } else {
+          yieldValue = omitPrototype({ ...innerDefKey, ...queryOptions });
+        }
+      } else {
+        const innerDefKey = { ...(value.queryKey ? { _def: key } : undefined) };
+        const innerKey = [...key, ...(value.queryKey ?? [])] as const;
+
+        const transformedSchema = transformSchema(value.context, innerKey);
+
+        yieldValue = omitPrototype({
+          _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
+          queryKey: innerKey,
+          ...innerDefKey,
+        });
       }
 
-      return [queryDef, scope, value] as const;
-    }
+      factoryMap.set(factoryKey, yieldValue);
+      return factoryMap;
+    }, new Map<$FactoryProperty, $Factory[$FactoryProperty]>());
+  };
 
-    return [queryDef, scope] as const;
-  }
+  const transformedSchema = transformSchema(schema, defKey._def);
 
-  const factory = schemaKeys.reduce((factoryMap, key) => {
-    const currentValue = schema[key];
-
-    let yieldValue: any;
-
-    if (typeof currentValue === 'function') {
-      type $ResultCallback = AnyFactoryOutputCallback<Key>;
-
-      const resultCallback: $ResultCallback = (...args) => {
-        const result = currentValue(...args);
-
-        /**
-         * Array check is necessary so that the correct
-         * createKey overload is called
-         */
-        if (Array.isArray(result)) {
-          return createKey(key, result);
-        }
-
-        return createKey(key, result);
-      };
-
-      resultCallback._def = [queryDef, key] as const;
-
-      yieldValue = resultCallback;
-    } else if (currentValue != null) {
-      yieldValue = createKey(key, currentValue);
-    } else {
-      yieldValue = createKey(key);
-    }
-
-    factoryMap.set(key, yieldValue);
-    return factoryMap;
-  }, new Map());
-
-  /**
-   * casting to satisfy type system that still includes deprecated API
-   */
-  return withDeprecatedApi(
-    omitPrototype({
-      ...Object.fromEntries(factory),
-      ...defKey,
-    }),
-  ) as QueryKeyFactoryResult<Key, ValidateFactory<FactorySchema>>;
+  return omitPrototype({
+    ...Object.fromEntries(transformedSchema),
+    ...defKey,
+  });
 }
 
+/**
+ * @internal
+ */
 const assertSchemaKeys = (schema: Record<string, unknown>): string[] => {
-  const keysSet = new Set(Object.keys(schema).sort((a, b) => a.localeCompare(b)));
-
-  if (keysSet.has('default')) {
-    throw new Error('"default" is a key reserved for the query key factory');
-  }
-
-  const keys = Array.from(keysSet);
+  const keys = Object.keys(schema).sort((a, b) => a.localeCompare(b));
 
   const hasKeyInShapeOfInternalKey = keys.some((key) => key.startsWith('_'));
 
   if (hasKeyInShapeOfInternalKey) {
-    throw new Error('Keys that start with "_" are reserved for the query key factory');
+    throw new Error('Keys that start with "_" are reserved for the Query Key Factory');
   }
 
   return keys;

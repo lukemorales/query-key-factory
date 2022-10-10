@@ -1,190 +1,596 @@
 import { createQueryKeys } from './create-query-keys';
+import { QueryFunction } from './query-context.types';
 
 describe('createQueryKeys', () => {
-  describe('when called with only one argument', () => {
-    it('creates a store with only "_def" if called with one parameter', () => {
-      const queryKeys = createQueryKeys('users');
+  describe('when called only with the key argument', () => {
+    it('creates an object with only "_def" key', () => {
+      const sut = createQueryKeys('test');
 
-      expect(queryKeys).toHaveProperty('_def');
-      expect(Object.keys(queryKeys)).toHaveLength(1);
+      expect(sut).toHaveProperty('_def');
+      expect(Object.keys(sut)).toHaveLength(1);
 
-      expect(queryKeys).toEqual({
-        _def: ['users'],
+      expect(sut).toEqual({
+        _def: ['test'],
       });
+
+      expect(sut).toHaveType<{ _def: readonly ['test'] }>();
     });
 
     it('creates the "_def" query key as an array', () => {
-      const queryKeys = createQueryKeys('users');
+      const sut = createQueryKeys('test');
 
-      expect(Array.isArray(queryKeys._def)).toBeTruthy();
-      expect(queryKeys._def).toHaveLength(1);
+      expect(Array.isArray(sut._def)).toBeTruthy();
+      expect(sut._def).toHaveLength(1);
 
-      expect(queryKeys._def).toEqual(['users']);
-
-      // TODO: delete expectation block on next major release
-      // eslint-disable-next-line no-lone-blocks
-      {
-        expect(Array.isArray(queryKeys.default)).toBeTruthy();
-
-        expect(queryKeys.default).toHaveLength(1);
-        expect(queryKeys.default).toEqual(['users']);
-      }
+      expect(sut._def).toEqual(['test']);
     });
   });
 
-  describe('when called with the key and the factory schema', () => {
-    it('throws an error if the factory schema contains a key that starts with "_"', () => {
+  describe('when called with the key and the schema', () => {
+    it('throws an error if the schema contains a key that starts with "_"', () => {
       expect(() =>
         createQueryKeys('users', {
           // @ts-expect-error: "_def" should not be an allowed key
-          _def: 'trying to override the _def key value',
-          role: 'admin',
+          _def: ['trying to override the _def key value'],
+          prop: null,
         }),
-      ).toThrow('Keys that start with "_" are reserved for the query key factory');
+      ).toThrow('Keys that start with "_" are reserved for the Query Key Factory');
 
-      // TODO: delete expectation block on next major release
-      // eslint-disable-next-line no-lone-blocks
-      {
-        expect(() =>
-          createQueryKeys('users', {
-            // @ts-expect-error: "default" should not be an allowed key
-            default: 'trying to override the default key value',
-            role: 'admin',
-          }),
-        ).toThrow('"default" is a key reserved for the query key factory');
-      }
-    });
-
-    it('creates a store that contains the "_def" key and the schema', () => {
-      const queryKeys = createQueryKeys('todos', {
-        status: 'open',
-        priority: 'high',
-      });
-
-      expect(queryKeys).toHaveProperty('_def');
-      expect(queryKeys).toHaveProperty('status');
-      expect(queryKeys).toHaveProperty('priority');
-
-      expect(queryKeys).toMatchObject({
-        _def: ['todos'],
-        status: ['todos', 'status', 'open'],
-        priority: ['todos', 'priority', 'high'],
-      });
+      expect(() =>
+        createQueryKeys('users', {
+          // @ts-expect-error: "_my_own_key" should not be an allowed key
+          _my_own_key: ['trying to create with the shape of an internal key'],
+          prop: null,
+        }),
+      ).toThrow('Keys that start with "_" are reserved for the Query Key Factory');
     });
 
     describe('when the schema property is not a function', () => {
-      it('creates an array in the shape [key, schema.property] if the value is NULL', () => {
-        const queryKeys = createQueryKeys('users', {
-          me: null,
-        });
+      describe('when the property value is NULL', () => {
+        it('returns an object with queryKey in the shape [key, schema.property]', () => {
+          const sut = createQueryKeys('test', {
+            prop: null,
+          });
 
-        expect(queryKeys.me).toHaveLength(2);
-        expect(queryKeys.me).toEqual(['users', 'me']);
+          expect(sut).toHaveProperty('_def');
+          expect(sut).toHaveProperty('prop');
+
+          expect(sut).toEqual({
+            _def: ['test'],
+            prop: {
+              queryKey: ['test', 'prop'],
+            },
+          });
+
+          expect(sut.prop).toHaveType<{ queryKey: readonly ['test', 'prop'] }>();
+        });
       });
 
-      it('creates an array in the shape [key, schema.property, value] if the value is not NULL', () => {
-        const queryKeys = createQueryKeys('users', {
-          role: 'admin',
+      describe('when the property value is a tuple', () => {
+        it('returns an object with queryKey in the shape [key, schema.property, value]', () => {
+          const sut = createQueryKeys('test', {
+            prop: ['value'],
+          });
+
+          expect(sut).toHaveProperty('_def');
+          expect(sut).toHaveProperty('prop');
+
+          expect(sut.prop.queryKey).toHaveLength(3);
+
+          expect(sut.prop).toEqual({
+            _def: ['test', 'prop'],
+            queryKey: ['test', 'prop', 'value'],
+          });
+
+          expect(sut.prop).toHaveType<{
+            _def: readonly ['test', 'prop'];
+            queryKey: readonly ['test', 'prop', string];
+          }>();
+        });
+      });
+
+      describe('when the property value is an object', () => {
+        describe('when the object has "queryKey" and "queryFn"', () => {
+          describe('when the queryKey value is NULL', () => {
+            it('returns an object with queryKey in the shape [key, schema.property]', () => {
+              const sut = createQueryKeys('test', {
+                prop: {
+                  queryKey: null,
+                  queryFn: () => Promise.resolve(true),
+                },
+              });
+
+              expect(sut).toHaveProperty('_def');
+              expect(sut).toHaveProperty('prop');
+
+              expect(sut).toEqual({
+                _def: ['test'],
+                prop: {
+                  queryKey: ['test', 'prop'],
+                  queryFn: expect.any(Function),
+                },
+              });
+
+              expect(sut.prop).toHaveType<{
+                queryKey: readonly ['test', 'prop'];
+                queryFn: QueryFunction<boolean, readonly ['test', 'prop']>;
+              }>();
+            });
+          });
+
+          describe('when the property value is a tuple', () => {
+            it('returns an object with queryKey in the shape [prop, schema.property, value]', () => {
+              const sut = createQueryKeys('test', {
+                prop: {
+                  queryKey: ['value'],
+                  queryFn: () => Promise.resolve(true),
+                },
+              });
+
+              expect(sut.prop.queryKey).toHaveLength(3);
+
+              expect(sut.prop).toEqual({
+                _def: ['test', 'prop'],
+                queryKey: ['test', 'prop', 'value'],
+                queryFn: expect.any(Function),
+              });
+
+              expect(sut.prop).toHaveType<{
+                _def: readonly ['test', 'prop'];
+                queryKey: readonly ['test', 'prop', string];
+                queryFn: QueryFunction<boolean, readonly ['test', 'prop', string]>;
+              }>();
+            });
+          });
         });
 
-        expect(queryKeys.role).toHaveLength(3);
+        describe('when the object has "queryKey" and "context"', () => {
+          describe('when the queryKey value is NULL', () => {
+            it('returns an object with queryKey in the shape [key, schema.property]', () => {
+              const sut = createQueryKeys('test', {
+                prop: {
+                  queryKey: null,
+                  context: {
+                    'context-prop': null,
+                  },
+                },
+              });
 
-        expect(queryKeys.role).toEqual(['users', 'role', 'admin']);
+              expect(sut).toHaveProperty('_def');
+              expect(sut).toHaveProperty('prop');
+
+              expect(sut).toEqual({
+                _def: ['test'],
+                prop: {
+                  _ctx: {
+                    'context-prop': {
+                      queryKey: ['test', 'prop', 'context-prop'],
+                    },
+                  },
+                  queryKey: ['test', 'prop'],
+                },
+              });
+
+              expect(sut.prop).toHaveType<{
+                _ctx: {
+                  'context-prop': {
+                    queryKey: readonly ['test', 'prop', 'context-prop'];
+                  };
+                };
+                queryKey: readonly ['test', 'prop'];
+              }>();
+            });
+          });
+
+          describe('when the property value is a tuple', () => {
+            it('returns an object with queryKey in the shape [prop, schema.property, value]', () => {
+              const sut = createQueryKeys('test', {
+                prop: {
+                  queryKey: ['value'],
+                  context: {
+                    'context-prop': null,
+                  },
+                },
+              });
+
+              expect(sut.prop.queryKey).toHaveLength(3);
+
+              expect(sut.prop).toEqual({
+                _def: ['test', 'prop'],
+                _ctx: {
+                  'context-prop': {
+                    queryKey: ['test', 'prop', 'value', 'context-prop'],
+                  },
+                },
+                queryKey: ['test', 'prop', 'value'],
+              });
+
+              expect(sut.prop).toHaveType<{
+                _def: readonly ['test', 'prop'];
+                _ctx: {
+                  'context-prop': {
+                    queryKey: readonly ['test', 'prop', string, 'context-prop'];
+                  };
+                };
+                queryKey: readonly ['test', 'prop', string];
+              }>();
+            });
+          });
+        });
+
+        describe('when the object has "queryKey", "queryFn" and "context"', () => {
+          describe('when the queryKey value is NULL', () => {
+            it('returns an object with queryKey in the shape [key, schema.property]', () => {
+              const sut = createQueryKeys('test', {
+                prop: {
+                  queryKey: null,
+                  queryFn: () => Promise.resolve(true),
+                  context: {
+                    'context-prop': null,
+                  },
+                },
+              });
+
+              expect(sut).toHaveProperty('_def');
+              expect(sut).toHaveProperty('prop');
+
+              expect(sut).toEqual({
+                _def: ['test'],
+                prop: {
+                  _ctx: {
+                    'context-prop': {
+                      queryKey: ['test', 'prop', 'context-prop'],
+                    },
+                  },
+                  queryKey: ['test', 'prop'],
+                  queryFn: expect.any(Function),
+                },
+              });
+
+              expect(sut.prop).toHaveType<{
+                _ctx: {
+                  'context-prop': {
+                    queryKey: readonly ['test', 'prop', 'context-prop'];
+                  };
+                };
+                queryKey: readonly ['test', 'prop'];
+                queryFn: QueryFunction<boolean, readonly ['test', 'prop']>;
+              }>();
+            });
+          });
+
+          describe('when the property value is a tuple', () => {
+            it('returns an object with queryKey in the shape [prop, schema.property, value]', () => {
+              const sut = createQueryKeys('test', {
+                prop: {
+                  queryKey: ['value'],
+                  queryFn: () => Promise.resolve(true),
+                  context: {
+                    'context-prop': null,
+                  },
+                },
+              });
+
+              expect(sut.prop.queryKey).toHaveLength(3);
+
+              expect(sut.prop).toEqual({
+                _def: ['test', 'prop'],
+                _ctx: {
+                  'context-prop': {
+                    queryKey: ['test', 'prop', 'value', 'context-prop'],
+                  },
+                },
+                queryKey: ['test', 'prop', 'value'],
+                queryFn: expect.any(Function),
+              });
+
+              expect(sut.prop).toHaveType<{
+                _def: readonly ['test', 'prop'];
+                _ctx: {
+                  'context-prop': {
+                    queryKey: readonly ['test', 'prop', string, 'context-prop'];
+                  };
+                };
+                queryKey: readonly ['test', 'prop', string];
+                queryFn: QueryFunction<boolean, readonly ['test', 'prop', string]>;
+              }>();
+            });
+          });
+        });
       });
     });
 
     describe('when the schema property is a function', () => {
-      describe('when the function returns a primitive', () => {
-        it('creates a callback that returns a formatted query key', () => {
-          const queryKeys = createQueryKeys('todos', {
-            todo: (id: string) => id,
+      it('creates a callback that returns the an object with queryKey', () => {
+        const sut = createQueryKeys('test', {
+          prop: (value: string) => [value],
+        });
+
+        expect(typeof sut.prop).toBe('function');
+
+        expect(sut.prop).toHaveProperty('_def');
+        expect(sut.prop._def).toEqual(['test', 'prop']);
+
+        const result = sut.prop('value');
+
+        expect(result).toHaveProperty('queryKey');
+
+        expect(Array.isArray(result.queryKey)).toBeTruthy();
+        expect(result.queryKey).toHaveLength(3);
+        expect(result).toEqual({
+          queryKey: ['test', 'prop', 'value'],
+        });
+
+        expect(sut.prop).toHaveType<
+          {
+            _def: readonly ['test', 'prop'];
+          } & ((value: string) => {
+            queryKey: readonly ['test', 'prop', string];
+          })
+        >();
+      });
+
+      describe('when the function returns a tuple', () => {
+        it('creates a callback that returns the an object with queryKey', () => {
+          const sut = createQueryKeys('test', {
+            prop: (value: string) => [value],
           });
 
-          expect(typeof queryKeys.todo).toBe('function');
+          const result = sut.prop('value');
 
-          const result = queryKeys.todo('todo-id');
+          expect(result).toEqual({
+            queryKey: ['test', 'prop', 'value'],
+          });
 
-          expect(Array.isArray(result)).toBeTruthy();
-          expect(result).toHaveLength(3);
-          expect(result).toEqual(['todos', 'todo', 'todo-id']);
+          expect(sut.prop).toHaveType<
+            {
+              _def: readonly ['test', 'prop'];
+            } & ((value: string) => {
+              queryKey: readonly ['test', 'prop', string];
+            })
+          >();
         });
       });
 
       describe('when the function returns an object', () => {
-        it('creates a callback that returns a formatted query key', () => {
-          const queryKeys = createQueryKeys('todos', {
-            todo: (id: string, preview: boolean) => ({ id, preview }),
-          });
-
-          expect(typeof queryKeys.todo).toBe('function');
-
-          const generatedKey = queryKeys.todo('todo-id', true);
-
-          expect(Array.isArray(generatedKey)).toBeTruthy();
-          expect(generatedKey).toHaveLength(3);
-          expect(generatedKey).toEqual(['todos', 'todo', { id: 'todo-id', preview: true }]);
-        });
-      });
-
-      describe('when the function returns a tuple', () => {
-        interface Options {
-          id: string;
-          preview: boolean;
-          status: 'completed' | 'in-progress';
-          tasksPerPage: number;
-        }
-
-        it('creates a function that returns a formatted query key when the result is an array', () => {
-          const queryKeys = createQueryKeys('todos', {
-            tuple: ({ id, preview, status, tasksPerPage }: Options) => [id, preview, status, tasksPerPage],
-            tupleWithRecord: (id: string, preview: boolean) => [id, { preview }],
-          });
-
-          {
-            expect(typeof queryKeys.tuple).toBe('function');
-
-            const result = queryKeys.tuple({
-              id: 'todo-id',
-              preview: true,
-              status: 'completed',
-              tasksPerPage: 3,
+        describe('when the object has "queryKey" and "queryFn"', () => {
+          it('creates a callback that returns the query options', () => {
+            const sut = createQueryKeys('test', {
+              prop: (value: string) => ({
+                queryKey: [value],
+                queryFn: () => Promise.resolve(true),
+              }),
             });
 
-            expect(Array.isArray(result)).toBeTruthy();
-            expect(result).toHaveLength(6);
-            expect(result).toEqual(['todos', 'tuple', 'todo-id', true, 'completed', 3]);
-          }
+            const result = sut.prop('value');
+            expect(result).toEqual({
+              queryKey: ['test', 'prop', 'value'],
+              queryFn: expect.any(Function),
+            });
 
-          {
-            expect(typeof queryKeys.tupleWithRecord).toBe('function');
+            expect(sut.prop).toHaveType<
+              {
+                _def: readonly ['test', 'prop'];
+              } & ((value: string) => {
+                queryKey: readonly ['test', 'prop', string];
+                queryFn: QueryFunction<boolean, readonly ['test', 'prop', string]>;
+              })
+            >();
+          });
+        });
 
-            const result = queryKeys.tupleWithRecord('todo-id', false);
+        describe('when the object has "queryKey" and "context"', () => {
+          it('creates a callback that returns an object with queryKey and _ctx', () => {
+            const sut = createQueryKeys('test', {
+              prop: (value: string) => ({
+                queryKey: [value],
+                context: {
+                  'context-prop': null,
+                },
+              }),
+            });
 
-            expect(Array.isArray(result)).toBeTruthy();
-            expect(result).toHaveLength(4);
-            expect(result).toEqual(['todos', 'tupleWithRecord', 'todo-id', { preview: false }]);
-          }
+            const result = sut.prop('value');
+
+            expect(result).toEqual({
+              _ctx: {
+                'context-prop': {
+                  queryKey: ['test', 'prop', 'value', 'context-prop'],
+                },
+              },
+              queryKey: ['test', 'prop', 'value'],
+            });
+
+            expect(sut.prop).toHaveType<
+              {
+                _def: readonly ['test', 'prop'];
+              } & ((value: string) => {
+                _ctx: {
+                  'context-prop': {
+                    queryKey: readonly ['test', 'prop', string, 'context-prop'];
+                  };
+                };
+                queryKey: readonly ['test', 'prop', string];
+              })
+            >();
+          });
+        });
+
+        describe('when the object has "queryKey", "queryFn" and "context"', () => {
+          it('creates a callback that returns an object with query options and _ctx', () => {
+            const sut = createQueryKeys('test', {
+              prop: (value: string) => ({
+                queryKey: [value],
+                queryFn: () => Promise.resolve(true),
+                context: {
+                  'context-prop': null,
+                },
+              }),
+            });
+
+            const result = sut.prop('value');
+
+            expect(result).toEqual({
+              _ctx: {
+                'context-prop': {
+                  queryKey: ['test', 'prop', 'value', 'context-prop'],
+                },
+              },
+              queryKey: ['test', 'prop', 'value'],
+              queryFn: expect.any(Function),
+            });
+
+            expect(sut.prop).toHaveType<
+              {
+                _def: readonly ['test', 'prop'];
+              } & ((value: string) => {
+                _ctx: {
+                  'context-prop': {
+                    queryKey: readonly ['test', 'prop', string, 'context-prop'];
+                  };
+                };
+                queryKey: readonly ['test', 'prop', string];
+                queryFn: QueryFunction<boolean, readonly ['test', 'prop', string]>;
+              })
+            >();
+          });
         });
       });
+    });
+  });
+});
 
-      it('exposes a "_def" property that returns [key, schema.property]', () => {
-        const queryKeys = createQueryKeys('todos', {
-          todo: (id: string) => id,
-        });
+describe('createQueryKeys |> extrapolating context nesting', () => {
+  describe('when setting as a static key', () => {
+    it('returns the expected types and shape', () => {
+      const sut = createQueryKeys('test', {
+        prop: {
+          queryKey: null,
+          context: {
+            nested1: null,
+            nested2: ['context-prop-2'],
+            nested3: (value: string) => ({
+              queryKey: [value],
+              context: {
+                nested4: null,
+              },
+            }),
+          },
+        },
+      });
 
-        expect(queryKeys.todo).toHaveProperty('_def');
+      expect(sut).toEqual({
+        _def: ['test'],
+        prop: {
+          queryKey: ['test', 'prop'],
+          _ctx: {
+            nested1: {
+              queryKey: ['test', 'prop', 'nested1'],
+            },
+            nested2: {
+              _def: ['test', 'prop', 'nested2'],
+              queryKey: ['test', 'prop', 'nested2', 'context-prop-2'],
+            },
+            nested3: expect.any(Function),
+          },
+        },
+      });
 
-        expect(queryKeys.todo._def).toHaveLength(2);
-        expect(queryKeys.todo._def).toEqual(['todos', 'todo']);
+      expect(sut.prop._ctx.nested3._def).toEqual(['test', 'prop', 'nested3']);
 
-        // TODO: delete expectation block on next major release
+      const result = sut.prop._ctx.nested3('context-prop-3');
+      expect(result).toEqual({
+        queryKey: ['test', 'prop', 'nested3', 'context-prop-3'],
+        _ctx: {
+          nested4: {
+            queryKey: ['test', 'prop', 'nested3', 'context-prop-3', 'nested4'],
+          },
+        },
+      });
+
+      expect(sut.prop).toHaveType<{
+        queryKey: readonly ['test', 'prop'];
+        _ctx: {
+          nested1: { queryKey: readonly ['test', 'prop', 'nested1'] };
+          nested2: {
+            _def: readonly ['test', 'prop', 'nested2'];
+            queryKey: readonly ['test', 'prop', 'nested2', string];
+          };
+          nested3: {
+            _def: readonly ['test', 'prop', 'nested3'];
+          } & ((value: string) => {
+            queryKey: readonly ['test', 'prop', 'nested3', string];
+            _ctx: {
+              nested4: { queryKey: readonly ['test', 'prop', 'nested3', string, 'nested4'] };
+            };
+          });
+        };
+      }>();
+    });
+  });
+
+  describe('when setting as a dynamic key', () => {
+    it('returns the expected types and shape', () => {
+      const sut = createQueryKeys('test', {
+        prop: (value: string) => ({
+          queryKey: [value],
+          context: {
+            nested1: null,
+            nested2: ['context-prop-2'],
+            nested3: (nestedValue: string) => ({
+              queryKey: [nestedValue],
+              context: {
+                nested4: null,
+              },
+            }),
+          },
+        }),
+      });
+
+      expect(sut).toEqual({
+        _def: ['test'],
+        prop: expect.any(Function),
+      });
+
+      expect(sut.prop._def).toEqual(['test', 'prop']);
+
+      const result = sut.prop('context-props');
+      expect(result).toEqual({
+        queryKey: ['test', 'prop', 'context-props'],
+        _ctx: {
+          nested1: {
+            queryKey: ['test', 'prop', 'context-props', 'nested1'],
+          },
+          nested2: {
+            _def: ['test', 'prop', 'context-props', 'nested2'],
+            queryKey: ['test', 'prop', 'context-props', 'nested2', 'context-prop-2'],
+          },
+          nested3: expect.any(Function),
+        },
+      });
+
+      expect(sut.prop).toHaveType<
         {
-          const result = queryKeys.todo.toScope();
-
-          expect(result).toHaveLength(2);
-          expect(result).toEqual(['todos', 'todo']);
-        }
-      });
+          _def: readonly ['test', 'prop'];
+        } & ((value: string) => {
+          queryKey: readonly ['test', 'prop', string];
+          _ctx: {
+            nested1: { queryKey: readonly ['test', 'prop', string, 'nested1'] };
+            nested2: {
+              _def: readonly ['test', 'prop', string, 'nested2'];
+              queryKey: readonly ['test', 'prop', string, 'nested2', string];
+            };
+            nested3: {
+              _def: readonly ['test', 'prop', string, 'nested3'];
+            } & ((nestedValue: string) => {
+              queryKey: readonly ['test', 'prop', string, 'nested3', string];
+              _ctx: {
+                nested4: { queryKey: readonly ['test', 'prop', string, 'nested3', string, 'nested4'] };
+              };
+            });
+          };
+        })
+      >();
     });
   });
 });

@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/lukemorales/query-key-factory"><img src="https://images.emojiterra.com/mozilla/512px/1f3ed.png" alt="tRPC" height="130"/ target="\_parent"></a>
+  <a href="https://github.com/lukemorales/query-key-factory"><img src="https://images.emojiterra.com/mozilla/512px/1f3ed.png" alt="Factory emoji" height="130"/ target="\_parent"></a>
 </p>
 
 <h1 align="center">Query Key Factory</h1>

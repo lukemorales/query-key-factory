@@ -60,6 +60,10 @@
     }],
     "no-shadow": "off",
     "prefer-template": "error",
+    "@typescript-eslint/array-type": [
+      "warn",
+      { "default": "array-simple", "readonly": "array-simple" }
+    ],
     "@typescript-eslint/ban-types": [
       "error",
       {

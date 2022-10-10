@@ -1,36 +1,104 @@
-name: Tests
+name: tests
 
 on:
   push:
     branches:
       - main
+
 jobs:
-  tests:
-    name: Building package
+  install-deps:
     runs-on: ubuntu-latest
+    name: 📦 Install dependencies
     steps:
-      - name: Checkout Repository
+      - name: 🔑 Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Caching node_modules
+      - name: 🔧 Install PNPM
+        uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 7
+
+      - name: ♻️ Cache node_modules
         uses: actions/cache@v3
-        id: yarn-cache
+        id: pnpm-cache
         with:
           path: "**/node_modules"
-          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: Setup Node
+      - name: 🛠️ Setup Node and install project dependencies
         uses: actions/setup-node@v3
         with:
           node-version: '14'
           check-latest: true
-          cache: 'yarn'
+          cache: 'pnpm'
 
-      - name: Install dependencies 🔧
-        if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: yarn install --frozen-lockfile
+        if: steps.pnpm-cache.outputs.cache-hit != 'true'
+      - run: pnpm install --prefer-offline
 
-      - name: Test package 🔧
-        run: yarn test:ci
+  tests:
+    name: 🧪 Test package
+    runs-on: ubuntu-latest
+    needs: install-deps
+    steps:
+      - name: 🔑 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🔧 Install PNPM
+        uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 7
+
+      - name: ♻️ Load node_modules
+        uses: actions/cache@v3
+        with:
+          path: "**/node_modules"
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+      - name: 🛠️ Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+          check-latest: true
+          cache: 'pnpm'
+
+      - name: 📦 Install dependencies
+        if: steps.pnpm-cache.outputs.cache-hit != 'true'
+        run: pnpm install --prefer-offline
+
+      - name: 🧪 Run tests
+        run: pnpm run test:ci
+
+  build:
+    name: 🏗️ Build package
+    runs-on: ubuntu-latest
+    needs: install-deps
+    steps:
+      - name: 🔑 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🔧 Install PNPM
+        uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 7
+
+      - name: ♻️ Load node_modules
+        uses: actions/cache@v3
+        with:
+          path: "**/node_modules"
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+      - name: 🛠️ Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+          check-latest: true
+          cache: 'pnpm'
+
+      - name: 📦 Install dependencies
+        if: steps.pnpm-cache.outputs.cache-hit != 'true'
+        run: pnpm install --prefer-offline
+
+      - name: 🏗️ Build package
+        run: pnpm run build

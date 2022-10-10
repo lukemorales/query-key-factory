@@ -1,124 +1,179 @@
-name: Release to NPM
+name: release to package managers
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 on:
   push:
     branches:
       - main
+
 jobs:
-  build:
-    name: Building package
+  install-deps:
     runs-on: ubuntu-latest
+    name: 📦 Install dependencies
     steps:
-      - name: Checkout Repository
+      - name: 🔑 Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Caching node_modules
+      - name: 🔧 Install PNPM
+        uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 7
+
+      - name: ♻️ Cache node_modules
         uses: actions/cache@v3
-        id: yarn-cache
+        id: pnpm-cache
         with:
           path: "**/node_modules"
-          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: Caching build files
+      - name: 👤 Set git user
+        run: |
+          git config --global user.email "lukemorales@live.com"
+          git config --global user.name "Luke Morales"
+
+      - name: 🛠️ Setup Node and install project dependencies
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+          check-latest: true
+          cache: 'pnpm'
+
+        if: steps.pnpm-cache.outputs.cache-hit != 'true'
+      - run: pnpm install --prefer-offline
+
+  build:
+    name: 🏗️ Build package
+    runs-on: ubuntu-latest
+    needs: install-deps
+    steps:
+      - name: 🔑 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🔧 Install PNPM
+        uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 7
+
+      - name: ♻️ Cache build files
         uses: actions/cache@v3
         id: build-cache
         with:
           path: "**/dist"
-          key: ${{ runner.os }}-build-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-build-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-build-
 
-      - name: Setup Node
+      - name: 🛠️ Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: '14'
           check-latest: true
-          cache: 'yarn'
+          cache: 'pnpm'
 
-      - name: Install dependencies 🔧
-        if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: yarn install --frozen-lockfile
+      - name: 📦 Install dependencies
+        if: steps.pnpm-cache.outputs.cache-hit != 'true'
+        run: pnpm install --prefer-offline
 
-      - name: Check for errors 🚨
-        run: yarn lint
+      - name: 🚨 Check for errors
+        run: pnpm run lint
 
-      - name: Test package 🔧
-        run: yarn test:ci
+      - name: 🧪 Run tests
+        run: pnpm run test:ci
 
-      - name: Build package 📦
-        run: yarn build
+      - name: ⚒️ Build package
+        run: pnpm run build
 
-  release-npm:
-    needs: build
-    if: ${{ github.repository_owner == 'lukemorales' }}
-    name: Release to NPM
+  npm-release:
+    name: 🚀 Release to NPM
     runs-on: ubuntu-latest
+    needs: build
+    if: github.repository == 'lukemorales/query-key-factory' && github.event_name != 'pull_request'
     steps:
-      - uses: actions/checkout@v3
+      - name: 🔑 Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Load node_modules
+      - name: 🔧 Install PNPM
+        uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 7
+
+      - name: ♻️ Load node_modules
         uses: actions/cache@v3
         with:
           path: "**/node_modules"
-          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
 
-      - name: Load build files
+      - name: ♻️ Load build files
         uses: actions/cache@v3
         with:
           path: "**/dist"
-          key: ${{ runner.os }}-build-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-build-${{ hashFiles('**/pnpm-lock.yaml') }}
 
-      - name: Setup Node for NPM
+      - name: 🛠️ Setup Node for NPM
         uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '16.14.2'
           check-latest: true
-          cache: 'yarn'
+          cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Publish to NPM 🚀
+      - name: 🚀 Create Changesets Pull Request or Publish to NPM
         id: changesets
         uses: changesets/action@v1
         with:
+          setupGitUser: false
+          title: "ci(changesets): bump package version"
           version: node .github/changeset-version.js
-          publish: yarn release
+          publish: pnpm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-  release-gpr:
-    needs: [build, release-npm]
-    name: Release to GitHub Package Manager
+  gpr-release:
+    name: 🚀 Release to GitHub Package Manager
+    if: steps.changesets.outputs.published == 'true'
     runs-on: ubuntu-latest
+    needs: [build, npm-release]
     permissions:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v3
+      - name: 🔑 Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Load node_modules
+      - name: 🔧 Install PNPM
+        uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 7
+
+      - name: ♻️ Load node_modules
         uses: actions/cache@v3
         with:
           path: "**/node_modules"
-          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
 
-      - name: Load build files
+      - name: ♻️ Load build files
         uses: actions/cache@v3
         with:
           path: "**/dist"
-          key: ${{ runner.os }}-build-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-build-${{ hashFiles('**/pnpm-lock.yaml') }}
 
-      - name: Setup Node for GPR
+      - name: 🛠️ Setup Node for GPR
         uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '16.14.2'
           check-latest: true
-          cache: 'yarn'
+          cache: 'pnpm'
           registry-url: 'https://npm.pkg.github.com'
 
-      - name: Publish to GPR 🚀
-        run: yarn publish
+      - name: 📦 Install dependencies
+        if: steps.pnpm-cache.outputs.cache-hit != 'true'
+        run: pnpm install --prefer-offline
+
+      - name: 🚀 Publish to GPR
+        run: pnpm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}

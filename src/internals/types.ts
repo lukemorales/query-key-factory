@@ -1,12 +1,13 @@
-/**
- * @internal
- */
-export type DeprecatedKey = 'default' | 'toScope' | (string & Record<never, never>);
+declare global {
+  interface ArrayConstructor {
+    isArray(arg: readonly any[] | any): arg is readonly any[];
+  }
+}
 
 /**
  * @internal
  */
-export type ExtractInternalKeys<T extends Record<string, unknown>> = Extract<keyof T, `_${string}` | 'default'>;
+export type ExtractInternalKeys<T extends Record<string, unknown>> = Extract<keyof T, `_${string}`>;
 
 /**
  * Math types for iterating over `mergeQueryKeys` schemas and

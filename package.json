@@ -1,6 +1,9 @@
 {
   "name": "@lukemorales/query-key-factory",
   "version": "0.6.1",
+  "author": "Luke Morales <lukemorales@live.com>",
+  "description": "A library for creating standardized query keys, useful for cache management in @tanstack/query",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/lukemorales/query-key-factory.git"
@@ -8,9 +11,6 @@
   "bugs": {
     "url": "https://github.com/lukemorales/query-key-factory/issues"
   },
-  "author": "Luke Morales <lukemorales@live.com>",
-  "description": "A library for creating standardized query keys, useful for cache management in @tanstack/query",
-  "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "typings": "dist/index.d.ts",
@@ -18,21 +18,22 @@
     "dist"
   ],
   "scripts": {
-    "prebuild": "$npm_execpath clean",
     "build": "run-p build:*",
-    "build:rollup": "rollup -c",
+    "build:tsup": "tsup --dts --minify",
+    "changeset": "changeset",
     "clean": "rimraf dist",
     "lint": "run-p lint:*",
     "lint:eslint": "eslint src --ext .ts",
-    "lint:eslint:fix": "$npm_execpath lint:eslint --fix",
+    "lint:eslint:fix": "pnpm run lint:eslint --fix",
     "lint:prettier": "prettier --check \"src/**/*.ts\"",
-    "lint:prettier:fix": "$npm_execpath lint:prettier --write",
+    "lint:prettier:fix": "pnpm run lint:prettier --write",
     "lint:tsc": "tsc --project tsconfig.json --noEmit",
     "test": "vitest --passWithNoTests",
-    "test:ci": "$npm_execpath test:coverage --run",
-    "test:coverage": "$npm_execpath test --coverage",
-    "test:ui": "$npm_execpath test:coverage --ui",
+    "test:ci": "pnpm run test:coverage --run",
+    "test:coverage": "pnpm run test --coverage",
+    "test:ui": "pnpm run test:coverage --ui",
     "prepare": "is-ci || husky install",
+    "prerelease": "run-p build test:ci",
     "release": "changeset publish"
   },
   "devDependencies": {
@@ -40,11 +41,12 @@
     "@changesets/cli": "^2.24.4",
     "@commitlint/cli": "^17.1.2",
     "@commitlint/config-conventional": "^17.1.0",
+    "@lukemorales/jest-type-matchers": "^0.2.1",
+    "@types/node": "^18.8.3",
     "@typescript-eslint/eslint-plugin": "5.36.2",
     "@typescript-eslint/parser": "5.36.2",
     "@vitest/coverage-c8": "^0.22.1",
     "@vitest/ui": "^0.22.1",
-    "esbuild": "^0.15.7",
     "eslint": "^8.2.0",
     "eslint-config-airbnb-base": "15.0.0",
     "eslint-config-prettier": "8.5.0",
@@ -59,12 +61,8 @@
     "lint-staged": "^13.0.3",
     "npm-run-all": "^4.1.5",
     "prettier": "2.7.1",
-    "rimraf": "^3.0.2",
-    "rollup": "^2.79.0",
-    "rollup-plugin-dts": "^4.2.2",
-    "rollup-plugin-esbuild": "^4.10.1",
-    "rollup-plugin-terser": "^7.0.2",
     "ts-node": "^10.9.1",
+    "tsup": "^6.2.3",
     "typescript": "^4.8.3",
     "vitest": "^0.22.1"
   },
