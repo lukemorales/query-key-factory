@@ -22,6 +22,7 @@
     "build:tsup": "tsup --dts --minify",
     "changeset": "changeset",
     "clean": "rimraf dist",
+    "dev": "pnpm run test:ui test:coverage --ui",
     "lint": "run-p lint:*",
     "lint:eslint": "eslint src --ext .ts",
     "lint:eslint:fix": "pnpm run lint:eslint --fix",
@@ -31,11 +32,11 @@
     "test": "vitest --passWithNoTests",
     "test:ci": "pnpm run test:coverage --run",
     "test:coverage": "pnpm run test --coverage",
-    "test:ui": "pnpm run test:coverage --ui",
     "prepare": "is-ci || husky install",
     "prerelease": "run-p build test:ci",
     "release": "changeset publish"
   },
+  "dependencies": {},
   "devDependencies": {
     "@changesets/changelog-github": "^0.4.6",
     "@changesets/cli": "^2.24.4",
