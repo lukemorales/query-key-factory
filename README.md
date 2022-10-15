@@ -128,7 +128,7 @@ export const todosKeys = createQueryKeys('todos', {
 ```
 
 ### Access to serializable keys scope definition
-Easy way to access the serializable key scope and invalidade all cache for that context:
+Easy way to access the serializable key scope and invalidate all cache for that context:
 ```ts
 todosKeys.list({ status: 'completed' }) // => ['todos', 'list', { status: 'completed' }]
 todosKeys.list._def; // => ['todos', 'list']
