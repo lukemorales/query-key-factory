@@ -90,6 +90,54 @@ describe('createQueryKeys', () => {
       });
 
       describe('when the property value is an object', () => {
+        describe('when the object has "queryKey"', () => {
+          describe('when the queryKey value is NULL', () => {
+            it('returns an object with queryKey in the shape [key, schema.property]', () => {
+              const sut = createQueryKeys('test', {
+                prop: {
+                  queryKey: null,
+                },
+              });
+
+              expect(sut).toHaveProperty('_def');
+              expect(sut).toHaveProperty('prop');
+
+              expect(sut).toEqual({
+                _def: ['test'],
+                prop: {
+                  queryKey: ['test', 'prop'],
+                },
+              });
+
+              expect(sut.prop).toHaveType<{
+                queryKey: readonly ['test', 'prop'];
+              }>();
+            });
+          });
+
+          describe('when the queryKey value is a tuple', () => {
+            it('returns an object with queryKey in the shape [prop, schema.property, value]', () => {
+              const sut = createQueryKeys('test', {
+                prop: {
+                  queryKey: ['value'],
+                },
+              });
+
+              expect(sut.prop.queryKey).toHaveLength(3);
+
+              expect(sut.prop).toEqual({
+                _def: ['test', 'prop'],
+                queryKey: ['test', 'prop', 'value'],
+              });
+
+              expect(sut.prop).toHaveType<{
+                _def: readonly ['test', 'prop'];
+                queryKey: readonly ['test', 'prop', string];
+              }>();
+            });
+          });
+        });
+
         describe('when the object has "queryKey" and "queryFn"', () => {
           describe('when the queryKey value is NULL', () => {
             it('returns an object with queryKey in the shape [key, schema.property]', () => {
@@ -353,6 +401,29 @@ describe('createQueryKeys', () => {
       });
 
       describe('when the function returns an object', () => {
+        describe('when the object has "queryKey"', () => {
+          it('creates a callback that returns "queryKey"', () => {
+            const sut = createQueryKeys('test', {
+              prop: (value: string) => ({
+                queryKey: [value],
+              }),
+            });
+
+            const result = sut.prop('value');
+            expect(result).toEqual({
+              queryKey: ['test', 'prop', 'value'],
+            });
+
+            expect(sut.prop).toHaveStrictType<
+              {
+                _def: readonly ['test', 'prop'];
+              } & ((value: string) => {
+                queryKey: readonly ['test', 'prop', string];
+              })
+            >();
+          });
+        });
+
         describe('when the object has "queryKey" and "queryFn"', () => {
           it('creates a callback that returns the query options', () => {
             const sut = createQueryKeys('test', {

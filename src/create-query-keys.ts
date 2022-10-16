@@ -69,10 +69,16 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
             });
           }
 
-          const transformedSchema = transformSchema(result.context, innerKey);
+          if ('context' in result) {
+            const transformedSchema = transformSchema(result.context, innerKey);
+
+            return omitPrototype({
+              _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
+              queryKey: innerKey,
+            });
+          }
 
           return omitPrototype({
-            _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
             queryKey: innerKey,
           });
         };
@@ -111,7 +117,7 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
         } else {
           yieldValue = omitPrototype({ ...innerDefKey, ...queryOptions });
         }
-      } else {
+      } else if ('context' in value) {
         const innerDefKey = { ...(value.queryKey ? { _def: key } : undefined) };
         const innerKey = [...key, ...(value.queryKey ?? [])] as const;
 
@@ -119,6 +125,14 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
 
         yieldValue = omitPrototype({
           _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
+          queryKey: innerKey,
+          ...innerDefKey,
+        });
+      } else {
+        const innerDefKey = { ...(value.queryKey ? { _def: key } : undefined) };
+        const innerKey = [...key, ...(value.queryKey ?? [])] as const;
+
+        yieldValue = omitPrototype({
           queryKey: innerKey,
           ...innerDefKey,
         });

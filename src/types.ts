@@ -13,34 +13,32 @@ export type KeyTuple = Tuple | Readonly<Tuple>;
 
 export type ValidValue = string | number | boolean | AnyObject;
 
-type KeySchemaWithContextualQueries = {
-  queryKey: readonly [ValidValue] | null;
+type NullableQueryKeyRecord = Record<'queryKey', readonly [ValidValue] | null>;
+
+type QueryKeyRecord = Record<'queryKey', readonly [ValidValue]>;
+
+type KeySchemaWithContextualQueries = NullableQueryKeyRecord & {
   context: FactorySchema;
 };
 
-type QueryFactorySchema = {
-  queryKey: readonly [ValidValue] | null;
+type QueryFactorySchema = NullableQueryKeyRecord & {
   queryFn: QueryFunction;
 };
 
-type QueryFactoryWithContextualQueriesSchema = {
-  queryKey: readonly [ValidValue] | null;
+type QueryFactoryWithContextualQueriesSchema = NullableQueryKeyRecord & {
   queryFn: QueryFunction;
   context: FactorySchema;
 };
 
-type DynamicKeySchemaWithContextualQueries = {
-  queryKey: readonly [ValidValue];
+type DynamicKeySchemaWithContextualQueries = QueryKeyRecord & {
   context: FactorySchema;
 };
 
-type DynamicQueryFactorySchema = {
-  queryKey: readonly [ValidValue];
+type DynamicQueryFactorySchema = QueryKeyRecord & {
   queryFn: QueryFunction;
 };
 
-type DynamicQueryFactoryWithContextualQueriesSchema = {
-  queryKey: readonly [ValidValue];
+type DynamicQueryFactoryWithContextualQueriesSchema = QueryKeyRecord & {
   queryFn: QueryFunction;
   context: FactorySchema;
 };
@@ -48,6 +46,7 @@ type DynamicQueryFactoryWithContextualQueriesSchema = {
 type FactoryProperty =
   | null
   | KeyTuple
+  | NullableQueryKeyRecord
   | KeySchemaWithContextualQueries
   | QueryFactorySchema
   | QueryFactoryWithContextualQueriesSchema;
@@ -58,6 +57,7 @@ type DynamicKey = (
   | DynamicQueryFactoryWithContextualQueriesSchema
   | DynamicQueryFactorySchema
   | DynamicKeySchemaWithContextualQueries
+  | QueryKeyRecord
   | KeyTuple;
 
 export type FactorySchema = Record<string, FactoryProperty | DynamicKey>;
@@ -118,6 +118,15 @@ type FactoryWithContextualQueriesOutput<
         };
       };
 
+type FactoryQueryKeyRecordOutput<
+  BaseKey extends AnyMutableOrReadonlyArray,
+  Schema extends NullableQueryKeyRecord | QueryKeyRecord,
+  SchemaQueryKey extends Schema['queryKey'] = Schema['queryKey'],
+  ComposedKey extends AnyMutableOrReadonlyArray = ComposeQueryKey<BaseKey, ExtractNullableKey<SchemaQueryKey>>,
+> = SchemaQueryKey extends null
+  ? Omit<QueryOptions<BaseKey, QueryFunction>, 'queryFn'>
+  : Omit<QueryOptions<ComposedKey, QueryFunction>, 'queryFn'> & DefinitionKey<BaseKey>;
+
 type FactoryQueryOptionsOutput<
   BaseKey extends AnyMutableOrReadonlyArray,
   Schema extends QueryFactorySchema | DynamicQueryFactorySchema,
@@ -169,6 +178,8 @@ type DynamicFactoryOutput<
     ? Omit<FactoryQueryOptionsOutput<Keys, GeneratorOutput>, '_def'>
     : GeneratorOutput extends DynamicKeySchemaWithContextualQueries
     ? Omit<FactoryWithContextualQueriesOutput<Keys, GeneratorOutput>, '_def'>
+    : GeneratorOutput extends QueryKeyRecord
+    ? Omit<FactoryQueryKeyRecordOutput<Keys, GeneratorOutput>, '_def'>
     : never;
 } & DefinitionKey<Keys>;
 
@@ -187,6 +198,8 @@ type StaticFactoryOutput<
   ? FactoryQueryOptionsOutput<Keys, Property>
   : Property extends KeySchemaWithContextualQueries
   ? FactoryWithContextualQueriesOutput<Keys, Property>
+  : Property extends NullableQueryKeyRecord
+  ? FactoryQueryKeyRecordOutput<Keys, Property>
   : never;
 
 type FactoryOutput<Key extends string, Schema extends FactorySchema> = DefinitionKey<[Key]> & {
