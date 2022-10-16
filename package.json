@@ -22,7 +22,7 @@
     "build:tsup": "tsup --dts --minify",
     "changeset": "changeset",
     "clean": "rimraf dist",
-    "dev": "pnpm run test:ui test:coverage --ui",
+    "dev": "pnpm run test:coverage --ui",
     "lint": "run-p lint:*",
     "lint:eslint": "eslint src --ext .ts",
     "lint:eslint:fix": "pnpm run lint:eslint --fix",
