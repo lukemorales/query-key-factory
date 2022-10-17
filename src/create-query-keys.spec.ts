@@ -90,6 +90,54 @@ describe('createQueryKeys', () => {
       });
 
       describe('when the property value is an object', () => {
+        describe('when the object has "queryKey"', () => {
+          describe('when the queryKey value is NULL', () => {
+            it('returns an object with queryKey in the shape [key, schema.property]', () => {
+              const sut = createQueryKeys('test', {
+                prop: {
+                  queryKey: null,
+                },
+              });
+
+              expect(sut).toHaveProperty('_def');
+              expect(sut).toHaveProperty('prop');
+
+              expect(sut).toEqual({
+                _def: ['test'],
+                prop: {
+                  queryKey: ['test', 'prop'],
+                },
+              });
+
+              expect(sut.prop).toHaveType<{
+                queryKey: readonly ['test', 'prop'];
+              }>();
+            });
+          });
+
+          describe('when the queryKey value is a tuple', () => {
+            it('returns an object with queryKey in the shape [prop, schema.property, value]', () => {
+              const sut = createQueryKeys('test', {
+                prop: {
+                  queryKey: ['value'],
+                },
+              });
+
+              expect(sut.prop.queryKey).toHaveLength(3);
+
+              expect(sut.prop).toEqual({
+                _def: ['test', 'prop'],
+                queryKey: ['test', 'prop', 'value'],
+              });
+
+              expect(sut.prop).toHaveType<{
+                _def: readonly ['test', 'prop'];
+                queryKey: readonly ['test', 'prop', string];
+              }>();
+            });
+          });
+        });
+
         describe('when the object has "queryKey" and "queryFn"', () => {
           describe('when the queryKey value is NULL', () => {
             it('returns an object with queryKey in the shape [key, schema.property]', () => {
@@ -144,13 +192,13 @@ describe('createQueryKeys', () => {
           });
         });
 
-        describe('when the object has "queryKey" and "context"', () => {
+        describe('when the object has "queryKey" and "contextQueries"', () => {
           describe('when the queryKey value is NULL', () => {
             it('returns an object with queryKey in the shape [key, schema.property]', () => {
               const sut = createQueryKeys('test', {
                 prop: {
                   queryKey: null,
-                  context: {
+                  contextQueries: {
                     'context-prop': null,
                   },
                 },
@@ -187,7 +235,7 @@ describe('createQueryKeys', () => {
               const sut = createQueryKeys('test', {
                 prop: {
                   queryKey: ['value'],
-                  context: {
+                  contextQueries: {
                     'context-prop': null,
                   },
                 },
@@ -218,14 +266,14 @@ describe('createQueryKeys', () => {
           });
         });
 
-        describe('when the object has "queryKey", "queryFn" and "context"', () => {
+        describe('when the object has "queryKey", "queryFn" and "contextQueries"', () => {
           describe('when the queryKey value is NULL', () => {
             it('returns an object with queryKey in the shape [key, schema.property]', () => {
               const sut = createQueryKeys('test', {
                 prop: {
                   queryKey: null,
                   queryFn: () => Promise.resolve(true),
-                  context: {
+                  contextQueries: {
                     'context-prop': null,
                   },
                 },
@@ -265,7 +313,7 @@ describe('createQueryKeys', () => {
                 prop: {
                   queryKey: ['value'],
                   queryFn: () => Promise.resolve(true),
-                  context: {
+                  contextQueries: {
                     'context-prop': null,
                   },
                 },
@@ -353,6 +401,29 @@ describe('createQueryKeys', () => {
       });
 
       describe('when the function returns an object', () => {
+        describe('when the object has "queryKey"', () => {
+          it('creates a callback that returns "queryKey"', () => {
+            const sut = createQueryKeys('test', {
+              prop: (value: string) => ({
+                queryKey: [value],
+              }),
+            });
+
+            const result = sut.prop('value');
+            expect(result).toEqual({
+              queryKey: ['test', 'prop', 'value'],
+            });
+
+            expect(sut.prop).toHaveStrictType<
+              {
+                _def: readonly ['test', 'prop'];
+              } & ((value: string) => {
+                queryKey: readonly ['test', 'prop', string];
+              })
+            >();
+          });
+        });
+
         describe('when the object has "queryKey" and "queryFn"', () => {
           it('creates a callback that returns the query options', () => {
             const sut = createQueryKeys('test', {
@@ -379,12 +450,12 @@ describe('createQueryKeys', () => {
           });
         });
 
-        describe('when the object has "queryKey" and "context"', () => {
+        describe('when the object has "queryKey" and "contextQueries"', () => {
           it('creates a callback that returns an object with queryKey and _ctx', () => {
             const sut = createQueryKeys('test', {
               prop: (value: string) => ({
                 queryKey: [value],
-                context: {
+                contextQueries: {
                   'context-prop': null,
                 },
               }),
@@ -416,13 +487,13 @@ describe('createQueryKeys', () => {
           });
         });
 
-        describe('when the object has "queryKey", "queryFn" and "context"', () => {
+        describe('when the object has "queryKey", "queryFn" and "contextQueries"', () => {
           it('creates a callback that returns an object with query options and _ctx', () => {
             const sut = createQueryKeys('test', {
               prop: (value: string) => ({
                 queryKey: [value],
                 queryFn: () => Promise.resolve(true),
-                context: {
+                contextQueries: {
                   'context-prop': null,
                 },
               }),
@@ -460,18 +531,18 @@ describe('createQueryKeys', () => {
   });
 });
 
-describe('createQueryKeys |> extrapolating context nesting', () => {
+describe('createQueryKeys |> extrapolating "contextQueries" nesting', () => {
   describe('when setting as a static key', () => {
     it('returns the expected types and shape', () => {
       const sut = createQueryKeys('test', {
         prop: {
           queryKey: null,
-          context: {
+          contextQueries: {
             nested1: null,
             nested2: ['context-prop-2'],
             nested3: (value: string) => ({
               queryKey: [value],
-              context: {
+              contextQueries: {
                 nested4: null,
               },
             }),
@@ -534,12 +605,12 @@ describe('createQueryKeys |> extrapolating context nesting', () => {
       const sut = createQueryKeys('test', {
         prop: (value: string) => ({
           queryKey: [value],
-          context: {
+          contextQueries: {
             nested1: null,
             nested2: ['context-prop-2'],
             nested3: (nestedValue: string) => ({
               queryKey: [nestedValue],
-              context: {
+              contextQueries: {
                 nested4: null,
               },
             }),
