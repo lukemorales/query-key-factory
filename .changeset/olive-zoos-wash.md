@@ -11,7 +11,7 @@ const people = createQueryKeys("people", {
   person: (id: number) => ({
     queryKey: [id],
     queryFn: () => api.getPerson({ params: { id } }),
-    context: {
+    contextQueries: {
       ships: {
         queryKey: null,
         queryFn: () => api.getShipsByPerson({
@@ -37,7 +37,7 @@ console.log(people.person('person_01'));
 // {
 //   queryKey: ['people', 'person', 'person_01'],
 //   queryFn: () => api.getPerson({ params: { id: 'person_01' } }),
-//   _ctx: { ...queries declared inside "context" }
+//   _ctx: { ...queries declared inside "contextQueries" }
 // }
 ```
 
@@ -95,7 +95,7 @@ export const todosKeys = createQueryKeys('todos', {
 ```
 
 #### Generated output for a query key is always an object
-With the new API, the output of an entry will always be an object according to what options you've declared in the factory (e.g.: if you returned an array or declared an object with only `queryKey`, your output will be `{ queryKey: [...values] }`, if you also declared `queryFn` it will be added to that object, and `context` will be available inside `_ctx`):
+With the new API, the output of an entry will always be an object according to what options you've declared in the factory (e.g.: if you returned an array or declared an object with only `queryKey`, your output will be `{ queryKey: [...values] }`, if you also declared `queryFn` it will be added to that object, and `contextQueries` will be available inside `_ctx`):
 
 ```diff
 export const todosKeys = createQueryKeys('todos', {

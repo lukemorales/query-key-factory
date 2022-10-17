@@ -18,7 +18,7 @@ type NullableQueryKeyRecord = Record<'queryKey', readonly [ValidValue] | null>;
 type QueryKeyRecord = Record<'queryKey', readonly [ValidValue]>;
 
 type KeySchemaWithContextualQueries = NullableQueryKeyRecord & {
-  context: FactorySchema;
+  contextQueries: FactorySchema;
 };
 
 type QueryFactorySchema = NullableQueryKeyRecord & {
@@ -27,11 +27,11 @@ type QueryFactorySchema = NullableQueryKeyRecord & {
 
 type QueryFactoryWithContextualQueriesSchema = NullableQueryKeyRecord & {
   queryFn: QueryFunction;
-  context: FactorySchema;
+  contextQueries: FactorySchema;
 };
 
 type DynamicKeySchemaWithContextualQueries = QueryKeyRecord & {
-  context: FactorySchema;
+  contextQueries: FactorySchema;
 };
 
 type DynamicQueryFactorySchema = QueryKeyRecord & {
@@ -40,7 +40,7 @@ type DynamicQueryFactorySchema = QueryKeyRecord & {
 
 type DynamicQueryFactoryWithContextualQueriesSchema = QueryKeyRecord & {
   queryFn: QueryFunction;
-  context: FactorySchema;
+  contextQueries: FactorySchema;
 };
 
 type FactoryProperty =
@@ -95,25 +95,25 @@ type FactoryWithContextualQueriesOutput<
   BaseKey extends AnyMutableOrReadonlyArray,
   Schema extends KeySchemaWithContextualQueries | DynamicKeySchemaWithContextualQueries,
   SchemaQueryKey extends Schema['queryKey'] = Schema['queryKey'],
-  ContextFactory extends Schema['context'] = Schema['context'],
+  ContextQueries extends Schema['contextQueries'] = Schema['contextQueries'],
   ComposedKey extends AnyMutableOrReadonlyArray = ComposeQueryKey<BaseKey, ExtractNullableKey<SchemaQueryKey>>,
 > = SchemaQueryKey extends null
   ? Omit<QueryOptions<ComposedKey, QueryFunction>, 'queryFn'> & {
       _ctx: {
-        [P in keyof ContextFactory]: ContextFactory[P] extends DynamicKey
-          ? DynamicFactoryOutput<[...ComposedKey, P], ContextFactory[P]>
-          : ContextFactory[P] extends FactoryProperty
-          ? StaticFactoryOutput<[...ComposedKey, P], ContextFactory[P]>
+        [P in keyof ContextQueries]: ContextQueries[P] extends DynamicKey
+          ? DynamicFactoryOutput<[...ComposedKey, P], ContextQueries[P]>
+          : ContextQueries[P] extends FactoryProperty
+          ? StaticFactoryOutput<[...ComposedKey, P], ContextQueries[P]>
           : never;
       };
     }
   : Omit<QueryOptions<ComposedKey, QueryFunction>, 'queryFn'> &
       DefinitionKey<BaseKey> & {
         _ctx: {
-          [P in keyof ContextFactory]: ContextFactory[P] extends DynamicKey
-            ? DynamicFactoryOutput<[...ComposedKey, P], ContextFactory[P]>
-            : ContextFactory[P] extends FactoryProperty
-            ? StaticFactoryOutput<[...ComposedKey, P], ContextFactory[P]>
+          [P in keyof ContextQueries]: ContextQueries[P] extends DynamicKey
+            ? DynamicFactoryOutput<[...ComposedKey, P], ContextQueries[P]>
+            : ContextQueries[P] extends FactoryProperty
+            ? StaticFactoryOutput<[...ComposedKey, P], ContextQueries[P]>
             : never;
         };
       };
@@ -142,25 +142,25 @@ type FactoryQueryOptionsWithContextualQueriesOutput<
   Schema extends QueryFactoryWithContextualQueriesSchema | DynamicQueryFactoryWithContextualQueriesSchema,
   SchemaQueryKey extends Schema['queryKey'] = Schema['queryKey'],
   QueryFn extends Schema['queryFn'] = Schema['queryFn'],
-  ContextFactory extends Schema['context'] = Schema['context'],
+  ContextQueries extends Schema['contextQueries'] = Schema['contextQueries'],
   Key extends AnyMutableOrReadonlyArray = ComposeQueryKey<BaseKey, ExtractNullableKey<SchemaQueryKey>>,
 > = SchemaQueryKey extends null
   ? QueryOptions<Key, QueryFn> & {
       _ctx: {
-        [P in keyof ContextFactory]: ContextFactory[P] extends DynamicKey
-          ? DynamicFactoryOutput<[...Key, P], ContextFactory[P]>
-          : ContextFactory[P] extends FactoryProperty
-          ? StaticFactoryOutput<[...Key, P], ContextFactory[P]>
+        [P in keyof ContextQueries]: ContextQueries[P] extends DynamicKey
+          ? DynamicFactoryOutput<[...Key, P], ContextQueries[P]>
+          : ContextQueries[P] extends FactoryProperty
+          ? StaticFactoryOutput<[...Key, P], ContextQueries[P]>
           : never;
       };
     }
   : DefinitionKey<BaseKey> &
       QueryOptions<Key, QueryFn> & {
         _ctx: {
-          [P in keyof ContextFactory]: ContextFactory[P] extends DynamicKey
-            ? DynamicFactoryOutput<[...Key, P], ContextFactory[P]>
-            : ContextFactory[P] extends FactoryProperty
-            ? StaticFactoryOutput<[...Key, P], ContextFactory[P]>
+          [P in keyof ContextQueries]: ContextQueries[P] extends DynamicKey
+            ? DynamicFactoryOutput<[...Key, P], ContextQueries[P]>
+            : ContextQueries[P] extends FactoryProperty
+            ? StaticFactoryOutput<[...Key, P], ContextQueries[P]>
             : never;
         };
       };

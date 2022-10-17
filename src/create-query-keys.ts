@@ -55,8 +55,8 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
               queryFn: result.queryFn,
             };
 
-            if ('context' in result) {
-              const transformedSchema = transformSchema(result.context, innerKey);
+            if ('contextQueries' in result) {
+              const transformedSchema = transformSchema(result.contextQueries, innerKey);
 
               return omitPrototype({
                 _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
@@ -69,8 +69,8 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
             });
           }
 
-          if ('context' in result) {
-            const transformedSchema = transformSchema(result.context, innerKey);
+          if ('contextQueries' in result) {
+            const transformedSchema = transformSchema(result.contextQueries, innerKey);
 
             return omitPrototype({
               _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
@@ -106,8 +106,8 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
           queryFn: value.queryFn,
         };
 
-        if ('context' in value) {
-          const transformedSchema = transformSchema(value.context, innerKey);
+        if ('contextQueries' in value) {
+          const transformedSchema = transformSchema(value.contextQueries, innerKey);
 
           yieldValue = omitPrototype({
             _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
@@ -117,11 +117,11 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
         } else {
           yieldValue = omitPrototype({ ...innerDefKey, ...queryOptions });
         }
-      } else if ('context' in value) {
+      } else if ('contextQueries' in value) {
         const innerDefKey = { ...(value.queryKey ? { _def: key } : undefined) };
         const innerKey = [...key, ...(value.queryKey ?? [])] as const;
 
-        const transformedSchema = transformSchema(value.context, innerKey);
+        const transformedSchema = transformSchema(value.contextQueries, innerKey);
 
         yieldValue = omitPrototype({
           _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
