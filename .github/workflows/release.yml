@@ -127,7 +127,8 @@ jobs:
         uses: changesets/action@v1
         with:
           setupGitUser: false
-          title: "ci(changesets): bump package version"
+          title: "chore(changesets): bump package version"
+          commit: "chore: bump package version"
           version: node .github/changeset-version.js
           publish: pnpm run release
         env:
