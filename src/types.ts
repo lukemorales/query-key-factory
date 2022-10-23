@@ -1,6 +1,8 @@
 import { Add, ExtractInternalKeys } from './internals';
 import { QueryFunction } from './query-context.types';
 
+type MergeInsertions<T> = T extends object ? { [K in keyof T]: MergeInsertions<T[K]> } : T;
+
 type AnyObject = Record<string, unknown>;
 
 export type AnyQueryKey = readonly [string, ...any[]];
@@ -218,8 +220,26 @@ export type QueryKeyFactoryResult<Key extends string, Schema extends FactorySche
 
 export type AnyQueryKeyFactoryResult = DefinitionKey<[string]> | QueryKeyFactoryResult<string, any>;
 
+type inferRecordQueryKeys<Target extends AnyObject> = {
+  [P in Exclude<keyof Target, 'queryFn'>]: Target[P] extends AnyMutableOrReadonlyArray
+    ? Target[P]
+    : Target[P] extends AnyObject
+    ? {
+        [K in keyof Target[P]]: inferSchemaProperty<Target[P][K]>;
+      }
+    : never;
+};
+
+type inferSchemaProperty<Value> = Value extends AnyMutableOrReadonlyArray
+  ? Value
+  : Value extends StaticFactoryOutput<any[], any>
+  ? inferRecordQueryKeys<Value>
+  : Value extends AnyFactoryOutputCallback
+  ? Record<'_def', Value['_def']> & inferRecordQueryKeys<ReturnType<Value>>
+  : never;
+
 export type inferQueryKeys<Schema extends AnyQueryKeyFactoryResult> = {
-  [P in keyof Schema]: Schema[P] extends (...args: any[]) => readonly any[] ? ReturnType<Schema[P]> : Schema[P];
+  [P in keyof Schema]: MergeInsertions<inferSchemaProperty<Schema[P]>>;
 };
 
 export type StoreFromMergedQueryKeys<
