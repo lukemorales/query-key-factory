@@ -1,6 +1,6 @@
 {
   "name": "@lukemorales/query-key-factory",
-  "version": "0.6.1",
+  "version": "1.0.0",
   "author": "Luke Morales <lukemorales@live.com>",
   "description": "A library for creating standardized query keys, useful for cache management in @tanstack/query",
   "license": "MIT",
