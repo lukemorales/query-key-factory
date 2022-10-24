@@ -120,3 +120,13 @@ export const todosKeys = createQueryKeys('todos', {
 
 + useQuery(todosKeys.list(filters));
 ```
+
+#### Helper types to infer query keys in the store reflect the new output
+The helper types to infer query keys in the created store reflect the new output, to account for all possible use cases:
+
+```diff
+type TodosKeys = inferQueryKeys<typeof todosKeys>;
+
+- type SingleTodoQueryKey = TodosKeys['todo'];
++ type SingleTodoQueryKey = TodosKeys['todo']['queryKey'];
+```

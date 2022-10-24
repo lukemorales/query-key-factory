@@ -15,7 +15,7 @@ describe('mergeQueryKeys', () => {
       detail: (userId: string) => ({
         queryKey: [userId],
         queryFn: () => Promise.resolve({ id: userId }),
-        context: {
+        contextQueries: {
           settings: null,
         },
       }),
@@ -23,7 +23,7 @@ describe('mergeQueryKeys', () => {
     const todosKeys = createQueryKeys('todos', {
       detail: (todoId: string) => [todoId],
       list: (filters: Filters) => [{ filters }],
-      search: (query: string, limit = 15) => [query, limit],
+      search: (query: string, limit: number) => [query, limit],
     });
 
     return { usersKeys, todosKeys };
@@ -42,7 +42,7 @@ describe('mergeQueryKeys', () => {
       todos: todosKeys,
     });
 
-    expect<inferQueryKeyStore<typeof store>>(store).toHaveType<{
+    expect(store).toHaveType<{
       users: {
         _def: readonly ['users'];
         me: {
@@ -80,6 +80,39 @@ describe('mergeQueryKeys', () => {
         ) => {
           queryKey: readonly ['todos', 'search', string, number];
         });
+      };
+    }>();
+
+    expect({} as inferQueryKeyStore<typeof store>).toHaveStrictType<{
+      users: {
+        _def: readonly ['users'];
+        me: {
+          queryKey: readonly ['users', 'me'];
+        };
+        detail: {
+          _def: readonly ['users', 'detail'];
+          _ctx: {
+            settings: {
+              queryKey: readonly ['users', 'detail', string, 'settings'];
+            };
+          };
+          queryKey: readonly ['users', 'detail', string];
+        };
+      };
+      todos: {
+        _def: readonly ['todos'];
+        detail: {
+          _def: readonly ['todos', 'detail'];
+          queryKey: readonly ['todos', 'detail', string];
+        };
+        list: {
+          _def: readonly ['todos', 'list'];
+          queryKey: readonly ['todos', 'list', { filters: Filters }];
+        };
+        search: {
+          _def: readonly ['todos', 'search'];
+          queryKey: readonly ['todos', 'search', string, number];
+        };
       };
     }>();
   });

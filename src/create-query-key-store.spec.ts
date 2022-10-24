@@ -15,7 +15,7 @@ describe('createQueryKeyStore', () => {
         detail: (userId: string) => ({
           queryKey: [userId],
           queryFn: () => Promise.resolve({ id: userId }),
-          context: {
+          contextQueries: {
             settings: null,
           },
         }),
@@ -23,7 +23,7 @@ describe('createQueryKeyStore', () => {
       todos: {
         detail: (todoId: string) => [todoId],
         list: (filters: Filters) => [{ filters }],
-        search: (query: string, limit = 15) => [query, limit],
+        search: (query: string, limit: number) => [query, limit],
       },
     });
 
@@ -48,7 +48,7 @@ describe('createQueryKeyStore', () => {
       },
     });
 
-    expect<inferQueryKeyStore<typeof store>>(store).toHaveType<{
+    expect(store).toHaveType<{
       users: {
         _def: readonly ['users'];
         me: {
@@ -86,6 +86,39 @@ describe('createQueryKeyStore', () => {
         ) => {
           queryKey: readonly ['todos', 'search', string, number];
         });
+      };
+    }>();
+
+    expect({} as inferQueryKeyStore<typeof store>).toHaveStrictType<{
+      users: {
+        _def: readonly ['users'];
+        me: {
+          queryKey: readonly ['users', 'me'];
+        };
+        detail: {
+          _def: readonly ['users', 'detail'];
+          queryKey: readonly ['users', 'detail', string];
+          _ctx: {
+            settings: {
+              queryKey: readonly ['users', 'detail', string, 'settings'];
+            };
+          };
+        };
+      };
+      todos: {
+        _def: readonly ['todos'];
+        detail: {
+          _def: readonly ['todos', 'detail'];
+          queryKey: readonly ['todos', 'detail', string];
+        };
+        list: {
+          _def: readonly ['todos', 'list'];
+          queryKey: readonly ['todos', 'list', { filters: Filters }];
+        };
+        search: {
+          _def: readonly ['todos', 'search'];
+          queryKey: readonly ['todos', 'search', string, number];
+        };
       };
     }>();
   });

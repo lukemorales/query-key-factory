@@ -1,5 +1,6 @@
 import { createQueryKeys } from './create-query-keys';
 import { QueryFunction } from './query-context.types';
+import { inferQueryKeys } from './types';
 
 describe('createQueryKeys', () => {
   describe('when called only with the key argument', () => {
@@ -14,6 +15,10 @@ describe('createQueryKeys', () => {
       });
 
       expect(sut).toHaveType<{ _def: readonly ['test'] }>();
+
+      expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
+        _def: readonly ['test'];
+      }>();
     });
 
     it('creates the "_def" query key as an array', () => {
@@ -63,6 +68,13 @@ describe('createQueryKeys', () => {
           });
 
           expect(sut.prop).toHaveType<{ queryKey: readonly ['test', 'prop'] }>();
+
+          expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
+            _def: readonly ['test'];
+            prop: {
+              queryKey: readonly ['test', 'prop'];
+            };
+          }>();
         });
       });
 
@@ -85,6 +97,14 @@ describe('createQueryKeys', () => {
           expect(sut.prop).toHaveType<{
             _def: readonly ['test', 'prop'];
             queryKey: readonly ['test', 'prop', string];
+          }>();
+
+          expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
+            _def: readonly ['test'];
+            prop: {
+              _def: readonly ['test', 'prop'];
+              queryKey: readonly ['test', 'prop', string];
+            };
           }>();
         });
       });
@@ -370,12 +390,18 @@ describe('createQueryKeys', () => {
         });
 
         expect(sut.prop).toHaveType<
-          {
-            _def: readonly ['test', 'prop'];
-          } & ((value: string) => {
+          { _def: readonly ['test', 'prop'] } & ((value: string) => {
             queryKey: readonly ['test', 'prop', string];
           })
         >();
+
+        expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
+          _def: readonly ['test'];
+          prop: {
+            _def: readonly ['test', 'prop'];
+            queryKey: readonly ['test', 'prop', string];
+          };
+        }>();
       });
 
       describe('when the function returns a tuple', () => {
@@ -391,12 +417,18 @@ describe('createQueryKeys', () => {
           });
 
           expect(sut.prop).toHaveType<
-            {
-              _def: readonly ['test', 'prop'];
-            } & ((value: string) => {
+            { _def: readonly ['test', 'prop'] } & ((value: string) => {
               queryKey: readonly ['test', 'prop', string];
             })
           >();
+
+          expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
+            _def: readonly ['test'];
+            prop: {
+              _def: readonly ['test', 'prop'];
+              queryKey: readonly ['test', 'prop', string];
+            };
+          }>();
         });
       });
 
@@ -415,12 +447,18 @@ describe('createQueryKeys', () => {
             });
 
             expect(sut.prop).toHaveStrictType<
-              {
-                _def: readonly ['test', 'prop'];
-              } & ((value: string) => {
+              { _def: readonly ['test', 'prop'] } & ((value: string) => {
                 queryKey: readonly ['test', 'prop', string];
               })
             >();
+
+            expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
+              _def: readonly ['test'];
+              prop: {
+                _def: readonly ['test', 'prop'];
+                queryKey: readonly ['test', 'prop', string];
+              };
+            }>();
           });
         });
 
@@ -440,13 +478,19 @@ describe('createQueryKeys', () => {
             });
 
             expect(sut.prop).toHaveType<
-              {
-                _def: readonly ['test', 'prop'];
-              } & ((value: string) => {
+              { _def: readonly ['test', 'prop'] } & ((value: string) => {
                 queryKey: readonly ['test', 'prop', string];
                 queryFn: QueryFunction<boolean, readonly ['test', 'prop', string]>;
               })
             >();
+
+            expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
+              _def: readonly ['test'];
+              prop: {
+                _def: readonly ['test', 'prop'];
+                queryKey: readonly ['test', 'prop', string];
+              };
+            }>();
           });
         });
 
@@ -473,9 +517,7 @@ describe('createQueryKeys', () => {
             });
 
             expect(sut.prop).toHaveType<
-              {
-                _def: readonly ['test', 'prop'];
-              } & ((value: string) => {
+              { _def: readonly ['test', 'prop'] } & ((value: string) => {
                 _ctx: {
                   'context-prop': {
                     queryKey: readonly ['test', 'prop', string, 'context-prop'];
@@ -484,6 +526,19 @@ describe('createQueryKeys', () => {
                 queryKey: readonly ['test', 'prop', string];
               })
             >();
+
+            expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
+              _def: readonly ['test'];
+              prop: {
+                _def: readonly ['test', 'prop'];
+                _ctx: {
+                  'context-prop': {
+                    queryKey: readonly ['test', 'prop', string, 'context-prop'];
+                  };
+                };
+                queryKey: readonly ['test', 'prop', string];
+              };
+            }>();
           });
         });
 
@@ -512,9 +567,7 @@ describe('createQueryKeys', () => {
             });
 
             expect(sut.prop).toHaveType<
-              {
-                _def: readonly ['test', 'prop'];
-              } & ((value: string) => {
+              { _def: readonly ['test', 'prop'] } & ((value: string) => {
                 _ctx: {
                   'context-prop': {
                     queryKey: readonly ['test', 'prop', string, 'context-prop'];
@@ -524,6 +577,19 @@ describe('createQueryKeys', () => {
                 queryFn: QueryFunction<boolean, readonly ['test', 'prop', string]>;
               })
             >();
+
+            expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
+              _def: readonly ['test'];
+              prop: {
+                _def: readonly ['test', 'prop'];
+                _ctx: {
+                  'context-prop': {
+                    queryKey: readonly ['test', 'prop', string, 'context-prop'];
+                  };
+                };
+                queryKey: readonly ['test', 'prop', string];
+              };
+            }>();
           });
         });
       });
@@ -587,14 +653,35 @@ describe('createQueryKeys |> extrapolating "contextQueries" nesting', () => {
             _def: readonly ['test', 'prop', 'nested2'];
             queryKey: readonly ['test', 'prop', 'nested2', string];
           };
-          nested3: {
-            _def: readonly ['test', 'prop', 'nested3'];
-          } & ((value: string) => {
+          nested3: { _def: readonly ['test', 'prop', 'nested3'] } & ((value: string) => {
             queryKey: readonly ['test', 'prop', 'nested3', string];
             _ctx: {
               nested4: { queryKey: readonly ['test', 'prop', 'nested3', string, 'nested4'] };
             };
           });
+        };
+      }>();
+
+      expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
+        _def: readonly ['test'];
+        prop: {
+          queryKey: readonly ['test', 'prop'];
+          _ctx: {
+            nested1: { queryKey: readonly ['test', 'prop', 'nested1'] };
+            nested2: {
+              _def: readonly ['test', 'prop', 'nested2'];
+              queryKey: readonly ['test', 'prop', 'nested2', string];
+            };
+            nested3: {
+              _def: readonly ['test', 'prop', 'nested3'];
+              queryKey: readonly ['test', 'prop', 'nested3', string];
+              _ctx: {
+                nested4: {
+                  queryKey: readonly ['test', 'prop', 'nested3', string, 'nested4'];
+                };
+              };
+            };
+          };
         };
       }>();
     });
@@ -651,9 +738,7 @@ describe('createQueryKeys |> extrapolating "contextQueries" nesting', () => {
               _def: readonly ['test', 'prop', string, 'nested2'];
               queryKey: readonly ['test', 'prop', string, 'nested2', string];
             };
-            nested3: {
-              _def: readonly ['test', 'prop', string, 'nested3'];
-            } & ((nestedValue: string) => {
+            nested3: { _def: readonly ['test', 'prop', string, 'nested3'] } & ((nestedValue: string) => {
               queryKey: readonly ['test', 'prop', string, 'nested3', string];
               _ctx: {
                 nested4: { queryKey: readonly ['test', 'prop', string, 'nested3', string, 'nested4'] };
@@ -662,6 +747,30 @@ describe('createQueryKeys |> extrapolating "contextQueries" nesting', () => {
           };
         })
       >();
+
+      expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
+        _def: readonly ['test'];
+        prop: {
+          _def: readonly ['test', 'prop'];
+          queryKey: readonly ['test', 'prop', string];
+          _ctx: {
+            nested1: { queryKey: readonly ['test', 'prop', string, 'nested1'] };
+            nested2: {
+              _def: readonly ['test', 'prop', string, 'nested2'];
+              queryKey: readonly ['test', 'prop', string, 'nested2', string];
+            };
+            nested3: {
+              _def: readonly ['test', 'prop', string, 'nested3'];
+              queryKey: readonly ['test', 'prop', string, 'nested3', string];
+              _ctx: {
+                nested4: {
+                  queryKey: readonly ['test', 'prop', string, 'nested3', string, 'nested4'];
+                };
+              };
+            };
+          };
+        };
+      }>();
     });
   });
 });
