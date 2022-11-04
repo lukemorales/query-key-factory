@@ -6,6 +6,13 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      forceGPR:
+        description: Force GPR release
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   install-deps:
@@ -119,8 +126,8 @@ jobs:
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: 🗃️ Create .npmrc
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+      # - name: 🗃️ Create .npmrc
+      #   run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
 
       - name: 👤 Set git user
         run: |
@@ -143,7 +150,7 @@ jobs:
 
   gpr-release:
     name: 🚀 Release to GitHub Package Manager
-    if: needs.release.outputs.published == 'true'
+    if: github.event.inputs.forceGPR == 'true' || needs.release.outputs.published == 'true'
     runs-on: ubuntu-latest
     needs: [build, release]
     permissions:
