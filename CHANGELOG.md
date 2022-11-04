@@ -1,5 +1,11 @@
 # @lukemorales/query-key-factory
 
+## 1.0.1
+
+### Patch Changes
+
+- [`d8bdb58`](https://github.com/lukemorales/query-key-factory/commit/d8bdb581c551d53a7fb8cf774c5e2b15554d25ee) Thanks [@lukemorales](https://github.com/lukemorales)! - Fix wrong published types for contextual queries
+
 ## 1.0.0
 
 ### Major Changes
