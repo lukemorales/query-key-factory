@@ -60,15 +60,6 @@ jobs:
         with:
           version: 7
 
-      - name: ♻️ Cache build files
-        uses: actions/cache@v3
-        id: build-cache
-        with:
-          path: "**/dist"
-          key: ${{ runner.os }}-build-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-build-
-
       - name: 🛠️ Setup Node
         uses: actions/setup-node@v3
         with:
@@ -91,6 +82,7 @@ jobs:
 
   release:
     name: 🚀 Release to NPM
+    if: github.event.inputs.forceGPR != 'true'
     runs-on: ubuntu-latest
     needs: build
     outputs:
@@ -125,9 +117,6 @@ jobs:
           check-latest: true
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
-
-      # - name: 🗃️ Create .npmrc
-      #   run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
 
       - name: 👤 Set git user
         run: |
@@ -171,12 +160,6 @@ jobs:
           path: "**/node_modules"
           key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
 
-      - name: ♻️ Load build files
-        uses: actions/cache@v3
-        with:
-          path: "**/dist"
-          key: ${{ runner.os }}-build-${{ hashFiles('**/pnpm-lock.yaml') }}
-
       - name: 🛠️ Setup Node for GPR
         uses: actions/setup-node@v3
         with:
@@ -188,6 +171,9 @@ jobs:
       - name: 📦 Install dependencies
         if: steps.pnpm-cache.outputs.cache-hit != 'true'
         run: pnpm install --prefer-offline
+
+      - name: ⚒️ Build package
+        run: pnpm run build
 
       - name: 🚀 Publish to GPR
         run: pnpm publish
