@@ -1,5 +1,11 @@
 # @lukemorales/query-key-factory
 
+## 1.0.2
+
+### Patch Changes
+
+- [#32](https://github.com/lukemorales/query-key-factory/pull/32) [`f74ec8e`](https://github.com/lukemorales/query-key-factory/commit/f74ec8ed8306650fb6d9296d5982605cfce7534c) Thanks [@lukemorales](https://github.com/lukemorales)! - Fix published types
+
 ## 1.0.1
 
 ### Patch Changes
