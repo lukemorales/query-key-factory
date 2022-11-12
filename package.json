@@ -37,7 +37,11 @@
     "release": "changeset publish"
   },
   "dependencies": {},
+  "peerDependencies": {
+    "@tanstack/query-core": "^4.0.0"
+  },
   "devDependencies": {
+    "@tanstack/query-core": "^4.0.0",
     "@changesets/changelog-github": "^0.4.6",
     "@changesets/cli": "^2.24.4",
     "@commitlint/cli": "^17.1.2",

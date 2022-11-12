@@ -6,6 +6,7 @@ specifiers:
   '@commitlint/cli': ^17.1.2
   '@commitlint/config-conventional': ^17.1.0
   '@lukemorales/jest-type-matchers': ^0.2.1
+  '@tanstack/query-core': ^4.0.0
   '@types/node': ^18.8.3
   '@typescript-eslint/eslint-plugin': 5.36.2
   '@typescript-eslint/parser': 5.36.2
@@ -36,6 +37,7 @@ devDependencies:
   '@commitlint/cli': 17.1.2
   '@commitlint/config-conventional': 17.1.0
   '@lukemorales/jest-type-matchers': 0.2.1_typescript@4.8.4
+  '@tanstack/query-core': 4.15.0
   '@types/node': 18.8.3
   '@typescript-eslint/eslint-plugin': 5.36.2_q7mrctxvxoqtj4jpjqmbsyg2qy
   '@typescript-eslint/parser': 5.36.2_ypn2ylkkyfa5i233caldtndbqa
@@ -615,6 +617,10 @@ packages:
 
   /@polka/url/1.0.0-next.21:
     resolution: {integrity: sha512-a5Sab1C4/icpTZVzZc5Ghpz88yQtGOyNqYXcZgOssB2uuAr+wF/MvN6bgtW32q7HHrvBki+BsZ0OuNv6EV3K9g==}
+    dev: true
+
+  /@tanstack/query-core/4.15.0:
+    resolution: {integrity: sha512-zEZ7AuQRb8Ts+WXw9TtGtqydxmcOSRsWkFYxxH8dykPcumsV49BcNDLhHtYqVGPQpMjqMS4RoVYQP+budT6WbA==}
     dev: true
 
   /@tsconfig/node10/1.0.9:
