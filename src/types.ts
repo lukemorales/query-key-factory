@@ -15,7 +15,7 @@ export type KeyTuple = Tuple | Readonly<Tuple>;
 
 export type ValidValue = string | number | boolean | AnyObject;
 
-type NullableQueryKeyRecord = Record<'queryKey', readonly [ValidValue] | null>;
+type NullableQueryKeyRecord = { queryKey?: readonly [ValidValue] | null };
 
 type QueryKeyRecord = Record<'queryKey', readonly [ValidValue]>;
 
