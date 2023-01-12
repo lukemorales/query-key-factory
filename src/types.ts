@@ -1,5 +1,6 @@
+import type { QueryFunction } from '@tanstack/query-core';
+
 import { Add, ExtractInternalKeys } from './internals';
-import { QueryFunction } from './query-context.types';
 
 type MergeInsertions<T> = T extends object ? { [K in keyof T]: MergeInsertions<T[K]> } : T;
 
