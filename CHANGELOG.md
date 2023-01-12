@@ -1,5 +1,17 @@
 # @lukemorales/query-key-factory
 
+## 1.1.0
+
+### Minor Changes
+
+- [#47](https://github.com/lukemorales/query-key-factory/pull/47) [`7013e19`](https://github.com/lukemorales/query-key-factory/commit/7013e197051f105dcbe585a276b93306ce069735) Thanks [@lukemorales](https://github.com/lukemorales)! - Add support for longer query keys in the `QueryOptions` pattern
+
+- [#34](https://github.com/lukemorales/query-key-factory/pull/34) [`abb3596`](https://github.com/lukemorales/query-key-factory/commit/abb35962028285d8a71ad10113e7dd5a576ccfba) Thanks [@wconnorwalsh](https://github.com/wconnorwalsh)! - Replace internal types with official `@tanstack/query-core` types
+
+### Patch Changes
+
+- [#46](https://github.com/lukemorales/query-key-factory/pull/46) [`0518ac4`](https://github.com/lukemorales/query-key-factory/commit/0518ac40b5f3eab802560fbe1183be9428cb18d6) Thanks [@lukemorales](https://github.com/lukemorales)! - Fix conflicting types
+
 ## 1.0.2
 
 ### Patch Changes
