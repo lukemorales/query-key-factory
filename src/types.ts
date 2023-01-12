@@ -14,9 +14,9 @@ export type KeyTuple = Tuple | Readonly<Tuple>;
 
 export type ValidValue = string | number | boolean | object;
 
-type NullableQueryKeyRecord = Record<'queryKey', readonly [ValidValue] | null>;
+type NullableQueryKeyRecord = Record<'queryKey', KeyTuple | null>;
 
-type QueryKeyRecord = Record<'queryKey', readonly [ValidValue]>;
+type QueryKeyRecord = Record<'queryKey', KeyTuple>;
 
 type KeySchemaWithContextualQueries = NullableQueryKeyRecord & {
   contextQueries: FactorySchema;
@@ -71,16 +71,16 @@ export type ValidateFactory<Schema extends FactorySchema> = Schema extends {
   ? InvalidSchema<Schema>
   : Schema;
 
-type ExtractNullableKey<Key extends readonly [ValidValue] | null | undefined> = Key extends
-  | [infer Value]
-  | readonly [infer Value]
+type ExtractNullableKey<Key extends KeyTuple | null | undefined> = Key extends
+  | [...infer Value]
+  | readonly [...infer Value]
   ? Value
   : Key extends null | undefined | unknown
   ? null
   : never;
 
-type ComposeQueryKey<BaseKey extends AnyMutableOrReadonlyArray, Key> = Key extends ValidValue
-  ? readonly [...BaseKey, Key]
+type ComposeQueryKey<BaseKey extends AnyMutableOrReadonlyArray, Key> = Key extends KeyTuple
+  ? readonly [...BaseKey, ...Key]
   : readonly [...BaseKey];
 
 export type QueryOptions<
@@ -169,18 +169,18 @@ type FactoryQueryOptionsWithContextualQueriesOutput<
 type DynamicFactoryOutput<
   Keys extends AnyMutableOrReadonlyArray,
   Generator extends DynamicKey,
-  GeneratorOutput extends ReturnType<Generator> = ReturnType<Generator>,
+  Output extends ReturnType<Generator> = ReturnType<Generator>,
 > = {
-  (...args: Parameters<Generator>): GeneratorOutput extends [...infer TupleResult] | readonly [...infer TupleResult]
+  (...args: Parameters<Generator>): Output extends [...infer TupleResult] | readonly [...infer TupleResult]
     ? Omit<QueryOptions<[...Keys, ...TupleResult], QueryFunction>, 'queryFn'>
-    : GeneratorOutput extends DynamicQueryFactoryWithContextualQueriesSchema
-    ? Omit<FactoryQueryOptionsWithContextualQueriesOutput<Keys, GeneratorOutput>, '_def'>
-    : GeneratorOutput extends DynamicQueryFactorySchema
-    ? Omit<FactoryQueryOptionsOutput<Keys, GeneratorOutput>, '_def'>
-    : GeneratorOutput extends DynamicKeySchemaWithContextualQueries
-    ? Omit<FactoryWithContextualQueriesOutput<Keys, GeneratorOutput>, '_def'>
-    : GeneratorOutput extends QueryKeyRecord
-    ? Omit<FactoryQueryKeyRecordOutput<Keys, GeneratorOutput>, '_def'>
+    : Output extends DynamicQueryFactoryWithContextualQueriesSchema
+    ? Omit<FactoryQueryOptionsWithContextualQueriesOutput<Keys, Output>, '_def'>
+    : Output extends DynamicQueryFactorySchema
+    ? Omit<FactoryQueryOptionsOutput<Keys, Output>, '_def'>
+    : Output extends DynamicKeySchemaWithContextualQueries
+    ? Omit<FactoryWithContextualQueriesOutput<Keys, Output>, '_def'>
+    : Output extends QueryKeyRecord
+    ? Omit<FactoryQueryKeyRecordOutput<Keys, Output>, '_def'>
     : never;
 } & DefinitionKey<Keys>;
 
@@ -253,9 +253,9 @@ export type StoreFromMergedQueryKeys<
 export type QueryKeyStoreSchema = Record<string, null | FactorySchema>;
 
 export type QueryKeyStore<StoreSchema extends QueryKeyStoreSchema> = {
-  [P in keyof StoreSchema]: StoreSchema[P] extends FactorySchema
-    ? QueryKeyFactoryResult<string & P, StoreSchema[P]>
-    : DefinitionKey<[string & P]>;
+  [P in keyof StoreSchema & string]: StoreSchema[P] extends FactorySchema
+    ? QueryKeyFactoryResult<P, StoreSchema[P]>
+    : DefinitionKey<[P]>;
 };
 
 export type inferQueryKeyStore<Store extends QueryKeyStore<any>> = {
