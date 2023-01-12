@@ -1,9 +1,3 @@
-declare global {
-  interface ArrayConstructor {
-    isArray(arg: readonly any[] | any): arg is readonly any[];
-  }
-}
-
 /**
  * @internal
  */
@@ -42,7 +36,7 @@ type TupleOf<T, N extends number> = number extends N
         : never;
     }[N];
 
-type Length<T extends any[]> = T extends { length: infer L } ? L : never;
+type Length<T extends any[]> = T extends { length: infer L } ? (L extends number ? L : never) : never;
 
 /**
  * @internal

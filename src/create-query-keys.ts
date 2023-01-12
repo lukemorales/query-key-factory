@@ -33,13 +33,15 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
       const value = factory[factoryKey];
       const key = [...mainKey, factoryKey] as const;
 
+      const isReadonlyArray = (arg: unknown): arg is readonly any[] => Array.isArray(arg);
+
       let yieldValue: any;
 
       if (typeof value === 'function') {
         const resultCallback: AnyFactoryOutputCallback = (...args) => {
           const result = value(...args);
 
-          if (Array.isArray(result)) {
+          if (isReadonlyArray(result)) {
             return omitPrototype({
               queryKey: [...key, ...result] as const,
             });
@@ -90,7 +92,7 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
         yieldValue = omitPrototype({
           queryKey: key,
         });
-      } else if (Array.isArray(value)) {
+      } else if (isReadonlyArray(value)) {
         yieldValue = omitPrototype({
           _def: key,
           queryKey: [...key, ...value] as const,

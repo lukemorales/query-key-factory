@@ -1,5 +1,6 @@
+import { QueryFunction } from '@tanstack/query-core';
+
 import { createQueryKeyStore } from './create-query-key-store';
-import { QueryFunction } from './query-context.types';
 import { inferQueryKeyStore } from './types';
 
 describe('createQueryKeyStore', () => {

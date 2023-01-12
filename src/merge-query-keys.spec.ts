@@ -1,6 +1,7 @@
+import { QueryFunction } from '@tanstack/query-core';
+
 import { createQueryKeys } from './create-query-keys';
 import { mergeQueryKeys } from './merge-query-keys';
-import { QueryFunction } from './query-context.types';
 import { inferQueryKeyStore } from './types';
 
 describe('mergeQueryKeys', () => {
