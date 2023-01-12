@@ -3,8 +3,6 @@ import { QueryFunction } from './query-context.types';
 
 type MergeInsertions<T> = T extends object ? { [K in keyof T]: MergeInsertions<T[K]> } : T;
 
-type AnyObject = Record<string, unknown>;
-
 export type AnyQueryKey = readonly [string, ...any[]];
 
 type AnyMutableOrReadonlyArray = any[] | readonly any[];
@@ -13,7 +11,7 @@ type Tuple = [ValidValue, ...Array<ValidValue | undefined>];
 
 export type KeyTuple = Tuple | Readonly<Tuple>;
 
-export type ValidValue = string | number | boolean | AnyObject;
+export type ValidValue = string | number | boolean | object;
 
 type NullableQueryKeyRecord = Record<'queryKey', readonly [ValidValue] | null>;
 
@@ -220,10 +218,10 @@ export type QueryKeyFactoryResult<Key extends string, Schema extends FactorySche
 
 export type AnyQueryKeyFactoryResult = DefinitionKey<[string]> | QueryKeyFactoryResult<string, any>;
 
-type inferRecordQueryKeys<Target extends AnyObject> = {
+type inferRecordQueryKeys<Target extends object> = {
   [P in Exclude<keyof Target, 'queryFn'>]: Target[P] extends AnyMutableOrReadonlyArray
     ? Target[P]
-    : Target[P] extends AnyObject
+    : Target[P] extends object
     ? {
         [K in keyof Target[P]]: inferSchemaProperty<Target[P][K]>;
       }
