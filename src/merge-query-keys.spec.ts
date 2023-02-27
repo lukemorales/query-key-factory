@@ -1,6 +1,6 @@
 import { QueryFunction } from '@tanstack/query-core';
-import { createMutationKeys } from './create-mutation-keys';
 
+import { createMutationKeys } from './create-mutation-keys';
 import { createQueryKeys } from './create-query-keys';
 import { mergeQueryKeys } from './merge-query-keys';
 import { inferQueryKeyStore } from './types';

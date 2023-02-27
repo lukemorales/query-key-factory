@@ -9,17 +9,17 @@ import type {
   AnyMutationKey,
 } from './types';
 
-export function createMutationKeys<Key extends string>(queryDef: Key): DefinitionKey<[Key]>;
+export function createMutationKeys<Key extends string>(mutationDef: Key): DefinitionKey<[Key]>;
 export function createMutationKeys<Key extends string, Schema extends MutationFactorySchema>(
-  queryDef: Key,
+  mutationDef: Key,
   schema: ValidateFactory<Schema>,
 ): MutationKeyFactoryResult<Key, Schema>;
 export function createMutationKeys<Key extends string, Schema extends MutationFactorySchema>(
-  queryDef: Key,
+  mutationDef: Key,
   schema?: ValidateFactory<Schema>,
 ): DefinitionKey<[Key]> | MutationKeyFactoryResult<Key, Schema> {
   const defKey: DefinitionKey<[Key]> = {
-    _def: [queryDef] as const,
+    _def: [mutationDef] as const,
   };
 
   if (schema == null) {
