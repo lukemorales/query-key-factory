@@ -408,7 +408,7 @@ type inferRecordQueryKeys<Target extends object> = {
     ? Target[P]
     : Target[P] extends object
     ? {
-        [K in keyof Target[P]]: inferQuerySchemaProperty<Target[P][K]>;
+        [K in keyof Target[P]]: inferSchemaProperty<Target[P][K]>;
       }
     : never;
 };
@@ -418,43 +418,35 @@ type inferRecordMutationKeys<Target extends object> = {
     ? Target[P]
     : Target[P] extends object
     ? {
-        [K in keyof Target[P]]: inferMutationSchemaProperty<Target[P][K]>;
+        [K in keyof Target[P]]: inferSchemaProperty<Target[P][K]>;
       }
     : never;
 };
 
-type inferQuerySchemaProperty<Value> = Value extends AnyMutableOrReadonlyArray
+type inferSchemaProperty<Value> = Value extends AnyMutableOrReadonlyArray
   ? Value
   : Value extends StaticQueryFactoryOutput<any[], any>
   ? inferRecordQueryKeys<Value>
-  : Value extends AnyQueryFactoryOutputCallback
-  ? Record<'_def', Value['_def']> & inferRecordQueryKeys<ReturnType<Value>>
-  : never;
-
-type inferMutationSchemaProperty<Value> = Value extends AnyMutableOrReadonlyArray
-  ? Value
   : Value extends StaticMutationFactoryOutput<any[], any>
   ? inferRecordMutationKeys<Value>
+  : Value extends AnyQueryFactoryOutputCallback
+  ? Record<'_def', Value['_def']> & inferRecordQueryKeys<ReturnType<Value>>
   : Value extends AnyMutationFactoryOutputCallback
   ? Record<'_def', Value['_def']> & inferRecordMutationKeys<ReturnType<Value>>
   : never;
 
-export type inferQueryKeys<Schema extends AnyQueryKeyFactoryResult> = {
-  [P in keyof Schema]: MergeInsertions<inferQuerySchemaProperty<Schema[P]>>;
-};
-
-export type inferMutationKeys<Schema extends AnyMutationKeyFactoryResult> = {
-  [P in keyof Schema]: MergeInsertions<inferMutationSchemaProperty<Schema[P]>>;
+export type inferQueryKeys<Schema extends AnyQueryKeyFactoryResult | AnyMutationKeyFactoryResult> = {
+  [P in keyof Schema]: MergeInsertions<inferSchemaProperty<Schema[P]>>;
 };
 
 export type StoreFromMergedQueryKeys<
-  QueryKeyFactoryResults extends AnyQueryKeyFactoryResult[],
+  QueryOrMutationKeyFactoryResults extends Array<AnyQueryKeyFactoryResult | AnyMutationKeyFactoryResult>,
   CurrentIndex extends number = 0,
-> = QueryKeyFactoryResults[CurrentIndex] extends null | undefined
+> = QueryOrMutationKeyFactoryResults[CurrentIndex] extends null | undefined
   ? {}
   : {
-      [P in QueryKeyFactoryResults[CurrentIndex]['_def'][0]]: QueryKeyFactoryResults[CurrentIndex];
-    } & StoreFromMergedQueryKeys<QueryKeyFactoryResults, Add<CurrentIndex, 1>>;
+      [P in QueryOrMutationKeyFactoryResults[CurrentIndex]['_def'][0]]: QueryOrMutationKeyFactoryResults[CurrentIndex];
+    } & StoreFromMergedQueryKeys<QueryOrMutationKeyFactoryResults, Add<CurrentIndex, 1>>;
 
 export type QueryKeyStoreSchema = Record<string, null | QueryFactorySchema>;
 

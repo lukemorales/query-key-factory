@@ -1,13 +1,13 @@
 import { omitPrototype } from './internals';
-import { AnyQueryKeyFactoryResult, StoreFromMergedQueryKeys } from './types';
+import { AnyMutationKeyFactoryResult, AnyQueryKeyFactoryResult, StoreFromMergedQueryKeys } from './types';
 
-export function mergeQueryKeys<QueryKeyFactoryResults extends AnyQueryKeyFactoryResult[]>(
-  ...schemas: QueryKeyFactoryResults
-): StoreFromMergedQueryKeys<QueryKeyFactoryResults> {
+export function mergeQueryKeys<
+  QueryKeyFactoryResults extends Array<AnyQueryKeyFactoryResult | AnyMutationKeyFactoryResult>,
+>(...schemas: QueryKeyFactoryResults): StoreFromMergedQueryKeys<QueryKeyFactoryResults> {
   const store = schemas.reduce((storeMap, current) => {
     const [storeKey] = current._def;
 
-    storeMap.set(storeKey, current);
+    storeMap.set(storeKey, { ...storeMap.get(storeKey), ...current });
     return storeMap;
   }, new Map());
 

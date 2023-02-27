@@ -1,7 +1,7 @@
 import { MutateFunction } from '@tanstack/query-core';
 
 import { createMutationKeys } from './create-mutation-keys';
-import { inferMutationKeys } from './types';
+import { inferQueryKeys } from './types';
 
 describe('createMutationKeys', () => {
   describe('when called only with the key argument', () => {
@@ -17,7 +17,7 @@ describe('createMutationKeys', () => {
 
       expect(sut).toHaveType<{ _def: readonly ['test'] }>();
 
-      expect({} as inferMutationKeys<typeof sut>).toHaveStrictType<{
+      expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
         _def: readonly ['test'];
       }>();
     });
@@ -70,7 +70,7 @@ describe('createMutationKeys', () => {
 
           expect(sut.prop).toHaveType<{ mutationKey: readonly ['test', 'prop'] }>();
 
-          expect({} as inferMutationKeys<typeof sut>).toHaveStrictType<{
+          expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
             _def: readonly ['test'];
             prop: {
               mutationKey: readonly ['test', 'prop'];
@@ -100,7 +100,7 @@ describe('createMutationKeys', () => {
             mutationKey: readonly ['test', 'prop', string];
           }>();
 
-          expect({} as inferMutationKeys<typeof sut>).toHaveStrictType<{
+          expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
             _def: readonly ['test'];
             prop: {
               _def: readonly ['test', 'prop'];
@@ -396,7 +396,7 @@ describe('createMutationKeys', () => {
           })
         >();
 
-        expect({} as inferMutationKeys<typeof sut>).toHaveStrictType<{
+        expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
           _def: readonly ['test'];
           prop: {
             _def: readonly ['test', 'prop'];
@@ -423,7 +423,7 @@ describe('createMutationKeys', () => {
             })
           >();
 
-          expect({} as inferMutationKeys<typeof sut>).toHaveStrictType<{
+          expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
             _def: readonly ['test'];
             prop: {
               _def: readonly ['test', 'prop'];
@@ -453,7 +453,7 @@ describe('createMutationKeys', () => {
               })
             >();
 
-            expect({} as inferMutationKeys<typeof sut>).toHaveStrictType<{
+            expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
               _def: readonly ['test'];
               prop: {
                 _def: readonly ['test', 'prop'];
@@ -485,7 +485,7 @@ describe('createMutationKeys', () => {
               })
             >();
 
-            expect({} as inferMutationKeys<typeof sut>).toHaveStrictType<{
+            expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
               _def: readonly ['test'];
               prop: {
                 _def: readonly ['test', 'prop'];
@@ -528,7 +528,7 @@ describe('createMutationKeys', () => {
               })
             >();
 
-            expect({} as inferMutationKeys<typeof sut>).toHaveStrictType<{
+            expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
               _def: readonly ['test'];
               prop: {
                 _def: readonly ['test', 'prop'];
@@ -579,7 +579,7 @@ describe('createMutationKeys', () => {
               })
             >();
 
-            expect({} as inferMutationKeys<typeof sut>).toHaveStrictType<{
+            expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
               _def: readonly ['test'];
               prop: {
                 _def: readonly ['test', 'prop'];
@@ -663,7 +663,7 @@ describe('createMutationKeys |> extrapolating "contextMutations" nesting', () =>
         };
       }>();
 
-      expect({} as inferMutationKeys<typeof sut>).toHaveStrictType<{
+      expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
         _def: readonly ['test'];
         prop: {
           mutationKey: readonly ['test', 'prop'];
@@ -749,7 +749,7 @@ describe('createMutationKeys |> extrapolating "contextMutations" nesting', () =>
         })
       >();
 
-      expect({} as inferMutationKeys<typeof sut>).toHaveStrictType<{
+      expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
         _def: readonly ['test'];
         prop: {
           _def: readonly ['test', 'prop'];
