@@ -1,10 +1,11 @@
-import type { QueryFunction } from '@tanstack/query-core';
+import type { QueryFunction, MutateFunction } from '@tanstack/query-core';
 
 import { Add, ExtractInternalKeys } from './internals';
 
 type MergeInsertions<T> = T extends object ? { [K in keyof T]: MergeInsertions<T[K]> } : T;
 
 export type AnyQueryKey = readonly [string, ...any[]];
+export type AnyMutationKey = AnyQueryKey;
 
 type AnyMutableOrReadonlyArray = any[] | readonly any[];
 
@@ -15,57 +16,103 @@ export type KeyTuple = Tuple | Readonly<Tuple>;
 export type ValidValue = string | number | boolean | object;
 
 type NullableQueryKeyRecord = Record<'queryKey', KeyTuple | null>;
+type NullableMutationKeyRecord = Record<'mutationKey', KeyTuple | null>;
 
 type QueryKeyRecord = Record<'queryKey', KeyTuple>;
+type MutationKeyRecord = Record<'mutationKey', KeyTuple>;
 
-type KeySchemaWithContextualQueries = NullableQueryKeyRecord & {
-  contextQueries: FactorySchema;
+type QueryKeySchemaWithContextualQueries = NullableQueryKeyRecord & {
+  contextQueries: QueryFactorySchema;
 };
 
-type QueryFactorySchema = NullableQueryKeyRecord & {
+type MutationKeySchemaWithContextualMutations = NullableMutationKeyRecord & {
+  contextMutations: MutationFactorySchema;
+};
+
+type $QueryFactorySchema = NullableQueryKeyRecord & {
   queryFn: QueryFunction;
+};
+
+type $MutationFactorySchema = NullableMutationKeyRecord & {
+  mutationFn: MutateFunction;
 };
 
 type QueryFactoryWithContextualQueriesSchema = NullableQueryKeyRecord & {
   queryFn: QueryFunction;
-  contextQueries: FactorySchema;
+  contextQueries: QueryFactorySchema;
 };
 
-type DynamicKeySchemaWithContextualQueries = QueryKeyRecord & {
-  contextQueries: FactorySchema;
+type MutationFactoryWithContextualMutationsSchema = NullableMutationKeyRecord & {
+  mutationFn: MutateFunction;
+  contextMutations: MutationFactorySchema;
+};
+
+type DynamicQueryKeySchemaWithContextualQueries = QueryKeyRecord & {
+  contextQueries: QueryFactorySchema;
+};
+
+type DynamicMutationKeySchemaWithContextualMutations = MutationKeyRecord & {
+  contextMutations: MutationFactorySchema;
 };
 
 type DynamicQueryFactorySchema = QueryKeyRecord & {
   queryFn: QueryFunction;
 };
 
-type DynamicQueryFactoryWithContextualQueriesSchema = QueryKeyRecord & {
-  queryFn: QueryFunction;
-  contextQueries: FactorySchema;
+type DynamicMutationFactorySchema = MutationKeyRecord & {
+  mutationFn: MutateFunction;
 };
 
-type FactoryProperty =
+type DynamicQueryFactoryWithContextualQueriesSchema = QueryKeyRecord & {
+  queryFn: QueryFunction;
+  contextQueries: QueryFactorySchema;
+};
+
+type DynamicMutationFactoryWithContextualMutationsSchema = MutationKeyRecord & {
+  mutationFn: MutateFunction;
+  contextMutations: MutationFactorySchema;
+};
+
+type QueryFactoryProperty =
   | null
   | KeyTuple
   | NullableQueryKeyRecord
-  | KeySchemaWithContextualQueries
-  | QueryFactorySchema
+  | QueryKeySchemaWithContextualQueries
+  | $QueryFactorySchema
   | QueryFactoryWithContextualQueriesSchema;
 
-type DynamicKey = (
+type MutationFactoryProperty =
+  | null
+  | KeyTuple
+  | NullableMutationKeyRecord
+  | MutationKeySchemaWithContextualMutations
+  | $MutationFactorySchema
+  | MutationFactoryWithContextualMutationsSchema;
+
+type QueryDynamicKey = (
   ...args: any[]
 ) =>
   | DynamicQueryFactoryWithContextualQueriesSchema
   | DynamicQueryFactorySchema
-  | DynamicKeySchemaWithContextualQueries
+  | DynamicQueryKeySchemaWithContextualQueries
   | QueryKeyRecord
   | KeyTuple;
 
-export type FactorySchema = Record<string, FactoryProperty | DynamicKey>;
+type MutationDynamicKey = (
+  ...args: any[]
+) =>
+  | DynamicMutationFactoryWithContextualMutationsSchema
+  | DynamicMutationFactorySchema
+  | DynamicMutationKeySchemaWithContextualMutations
+  | MutationKeyRecord
+  | KeyTuple;
 
-type InvalidSchema<Schema extends FactorySchema> = Omit<Schema, `_${string}`>;
+export type QueryFactorySchema = Record<string, QueryFactoryProperty | QueryDynamicKey>;
+export type MutationFactorySchema = Record<string, MutationFactoryProperty | MutationDynamicKey>;
 
-export type ValidateFactory<Schema extends FactorySchema> = Schema extends {
+type InvalidSchema<Schema extends QueryFactorySchema | MutationFactorySchema> = Omit<Schema, `_${string}`>;
+
+export type ValidateFactory<Schema extends QueryFactorySchema | MutationFactorySchema> = Schema extends {
   [P in ExtractInternalKeys<Schema>]: Schema[P];
 }
   ? InvalidSchema<Schema>
@@ -92,29 +139,66 @@ export type QueryOptions<
   queryFn: QueryFunction<Awaited<FetcherResult>, readonly [...Keys]>;
 };
 
-type FactoryWithContextualQueriesOutput<
+export type MutationOptions<
+  Keys extends AnyMutableOrReadonlyArray,
+  Fetcher extends MutateFunction,
+  FetcherResult extends ReturnType<Fetcher> = ReturnType<Fetcher>,
+  FetcherVariables extends Parameters<Fetcher>[0] = Parameters<Fetcher>[0],
+> = {
+  mutationKey: readonly [...Keys];
+  mutationFn: MutateFunction<Awaited<FetcherResult>, unknown, FetcherVariables, unknown>;
+};
+
+type QueryFactoryWithContextualQueriesOutput<
   BaseKey extends AnyMutableOrReadonlyArray,
-  Schema extends KeySchemaWithContextualQueries | DynamicKeySchemaWithContextualQueries,
+  Schema extends QueryKeySchemaWithContextualQueries | DynamicQueryKeySchemaWithContextualQueries,
   SchemaQueryKey extends Schema['queryKey'] = Schema['queryKey'],
   ContextQueries extends Schema['contextQueries'] = Schema['contextQueries'],
   ComposedKey extends AnyMutableOrReadonlyArray = ComposeQueryKey<BaseKey, ExtractNullableKey<SchemaQueryKey>>,
 > = SchemaQueryKey extends null
   ? Omit<QueryOptions<ComposedKey, QueryFunction>, 'queryFn'> & {
       _ctx: {
-        [P in keyof ContextQueries]: ContextQueries[P] extends DynamicKey
-          ? DynamicFactoryOutput<[...ComposedKey, P], ContextQueries[P]>
-          : ContextQueries[P] extends FactoryProperty
-          ? StaticFactoryOutput<[...ComposedKey, P], ContextQueries[P]>
+        [P in keyof ContextQueries]: ContextQueries[P] extends QueryDynamicKey
+          ? DynamicQueryFactoryOutput<[...ComposedKey, P], ContextQueries[P]>
+          : ContextQueries[P] extends QueryFactoryProperty
+          ? StaticQueryFactoryOutput<[...ComposedKey, P], ContextQueries[P]>
           : never;
       };
     }
   : Omit<QueryOptions<ComposedKey, QueryFunction>, 'queryFn'> &
       DefinitionKey<BaseKey> & {
         _ctx: {
-          [P in keyof ContextQueries]: ContextQueries[P] extends DynamicKey
-            ? DynamicFactoryOutput<[...ComposedKey, P], ContextQueries[P]>
-            : ContextQueries[P] extends FactoryProperty
-            ? StaticFactoryOutput<[...ComposedKey, P], ContextQueries[P]>
+          [P in keyof ContextQueries]: ContextQueries[P] extends QueryDynamicKey
+            ? DynamicQueryFactoryOutput<[...ComposedKey, P], ContextQueries[P]>
+            : ContextQueries[P] extends QueryFactoryProperty
+            ? StaticQueryFactoryOutput<[...ComposedKey, P], ContextQueries[P]>
+            : never;
+        };
+      };
+
+type MutationFactoryWithContextualQueriesOutput<
+  BaseKey extends AnyMutableOrReadonlyArray,
+  Schema extends MutationKeySchemaWithContextualMutations | DynamicMutationKeySchemaWithContextualMutations,
+  SchemaMutationKey extends Schema['mutationKey'] = Schema['mutationKey'],
+  ContextMutations extends Schema['contextMutations'] = Schema['contextMutations'],
+  ComposedKey extends AnyMutableOrReadonlyArray = ComposeQueryKey<BaseKey, ExtractNullableKey<SchemaMutationKey>>,
+> = SchemaMutationKey extends null
+  ? Omit<MutationOptions<ComposedKey, MutateFunction>, 'mutationFn'> & {
+      _ctx: {
+        [P in keyof ContextMutations]: ContextMutations[P] extends MutationDynamicKey
+          ? DynamicMutationFactoryOutput<[...ComposedKey, P], ContextMutations[P]>
+          : ContextMutations[P] extends MutationFactoryProperty
+          ? StaticMutationFactoryOutput<[...ComposedKey, P], ContextMutations[P]>
+          : never;
+      };
+    }
+  : Omit<MutationOptions<ComposedKey, MutateFunction>, 'mutationFn'> &
+      DefinitionKey<BaseKey> & {
+        _ctx: {
+          [P in keyof ContextMutations]: ContextMutations[P] extends MutationDynamicKey
+            ? DynamicMutationFactoryOutput<[...ComposedKey, P], ContextMutations[P]>
+            : ContextMutations[P] extends MutationFactoryProperty
+            ? StaticMutationFactoryOutput<[...ComposedKey, P], ContextMutations[P]>
             : never;
         };
       };
@@ -128,15 +212,34 @@ type FactoryQueryKeyRecordOutput<
   ? Omit<QueryOptions<BaseKey, QueryFunction>, 'queryFn'>
   : Omit<QueryOptions<ComposedKey, QueryFunction>, 'queryFn'> & DefinitionKey<BaseKey>;
 
+type FactoryMutationKeyRecordOutput<
+  BaseKey extends AnyMutableOrReadonlyArray,
+  Schema extends NullableMutationKeyRecord | MutationKeyRecord,
+  SchemaMutationKey extends Schema['mutationKey'] = Schema['mutationKey'],
+  ComposedKey extends AnyMutableOrReadonlyArray = ComposeQueryKey<BaseKey, ExtractNullableKey<SchemaMutationKey>>,
+> = SchemaMutationKey extends null
+  ? Omit<MutationOptions<BaseKey, MutateFunction>, 'mutationFn'>
+  : Omit<MutationOptions<ComposedKey, MutateFunction>, 'mutationFn'> & DefinitionKey<BaseKey>;
+
 type FactoryQueryOptionsOutput<
   BaseKey extends AnyMutableOrReadonlyArray,
-  Schema extends QueryFactorySchema | DynamicQueryFactorySchema,
+  Schema extends $QueryFactorySchema | DynamicQueryFactorySchema,
   SchemaQueryKey extends Schema['queryKey'] = Schema['queryKey'],
   QueryFn extends Schema['queryFn'] = Schema['queryFn'],
   ComposedKey extends AnyMutableOrReadonlyArray = ComposeQueryKey<BaseKey, ExtractNullableKey<SchemaQueryKey>>,
 > = SchemaQueryKey extends null
   ? QueryOptions<BaseKey, QueryFn>
   : QueryOptions<ComposedKey, QueryFn> & DefinitionKey<BaseKey>;
+
+type FactoryMutationOptionsOutput<
+  BaseKey extends AnyMutableOrReadonlyArray,
+  Schema extends $MutationFactorySchema | DynamicMutationFactorySchema,
+  SchemaQueryKey extends Schema['mutationKey'] = Schema['mutationKey'],
+  MutationFn extends Schema['mutationFn'] = Schema['mutationFn'],
+  ComposedKey extends AnyMutableOrReadonlyArray = ComposeQueryKey<BaseKey, ExtractNullableKey<SchemaQueryKey>>,
+> = SchemaQueryKey extends null
+  ? MutationOptions<BaseKey, MutationFn>
+  : MutationOptions<ComposedKey, MutationFn> & DefinitionKey<BaseKey>;
 
 type FactoryQueryOptionsWithContextualQueriesOutput<
   BaseKey extends AnyMutableOrReadonlyArray,
@@ -148,27 +251,55 @@ type FactoryQueryOptionsWithContextualQueriesOutput<
 > = SchemaQueryKey extends null
   ? QueryOptions<Key, QueryFn> & {
       _ctx: {
-        [P in keyof ContextQueries]: ContextQueries[P] extends DynamicKey
-          ? DynamicFactoryOutput<[...Key, P], ContextQueries[P]>
-          : ContextQueries[P] extends FactoryProperty
-          ? StaticFactoryOutput<[...Key, P], ContextQueries[P]>
+        [P in keyof ContextQueries]: ContextQueries[P] extends QueryDynamicKey
+          ? DynamicQueryFactoryOutput<[...Key, P], ContextQueries[P]>
+          : ContextQueries[P] extends QueryFactoryProperty
+          ? StaticQueryFactoryOutput<[...Key, P], ContextQueries[P]>
           : never;
       };
     }
   : DefinitionKey<BaseKey> &
       QueryOptions<Key, QueryFn> & {
         _ctx: {
-          [P in keyof ContextQueries]: ContextQueries[P] extends DynamicKey
-            ? DynamicFactoryOutput<[...Key, P], ContextQueries[P]>
-            : ContextQueries[P] extends FactoryProperty
-            ? StaticFactoryOutput<[...Key, P], ContextQueries[P]>
+          [P in keyof ContextQueries]: ContextQueries[P] extends QueryDynamicKey
+            ? DynamicQueryFactoryOutput<[...Key, P], ContextQueries[P]>
+            : ContextQueries[P] extends QueryFactoryProperty
+            ? StaticQueryFactoryOutput<[...Key, P], ContextQueries[P]>
             : never;
         };
       };
 
-type DynamicFactoryOutput<
+type FactoryMutationOptionsWithContextualQueriesOutput<
+  BaseKey extends AnyMutableOrReadonlyArray,
+  Schema extends MutationFactoryWithContextualMutationsSchema | DynamicMutationFactoryWithContextualMutationsSchema,
+  SchemaQueryKey extends Schema['mutationKey'] = Schema['mutationKey'],
+  MutationFn extends Schema['mutationFn'] = Schema['mutationFn'],
+  ContextMutations extends Schema['contextMutations'] = Schema['contextMutations'],
+  Key extends AnyMutableOrReadonlyArray = ComposeQueryKey<BaseKey, ExtractNullableKey<SchemaQueryKey>>,
+> = SchemaQueryKey extends null
+  ? MutationOptions<Key, MutationFn> & {
+      _ctx: {
+        [P in keyof ContextMutations]: ContextMutations[P] extends MutationDynamicKey
+          ? DynamicMutationFactoryOutput<[...Key, P], ContextMutations[P]>
+          : ContextMutations[P] extends MutationFactoryProperty
+          ? StaticMutationFactoryOutput<[...Key, P], ContextMutations[P]>
+          : never;
+      };
+    }
+  : DefinitionKey<BaseKey> &
+      MutationOptions<Key, MutationFn> & {
+        _ctx: {
+          [P in keyof ContextMutations]: ContextMutations[P] extends MutationDynamicKey
+            ? DynamicMutationFactoryOutput<[...Key, P], ContextMutations[P]>
+            : ContextMutations[P] extends MutationFactoryProperty
+            ? StaticMutationFactoryOutput<[...Key, P], ContextMutations[P]>
+            : never;
+        };
+      };
+
+type DynamicQueryFactoryOutput<
   Keys extends AnyMutableOrReadonlyArray,
-  Generator extends DynamicKey,
+  Generator extends QueryDynamicKey,
   Output extends ReturnType<Generator> = ReturnType<Generator>,
 > = {
   (...args: Parameters<Generator>): Output extends [...infer TupleResult] | readonly [...infer TupleResult]
@@ -177,37 +308,81 @@ type DynamicFactoryOutput<
     ? Omit<FactoryQueryOptionsWithContextualQueriesOutput<Keys, Output>, '_def'>
     : Output extends DynamicQueryFactorySchema
     ? Omit<FactoryQueryOptionsOutput<Keys, Output>, '_def'>
-    : Output extends DynamicKeySchemaWithContextualQueries
-    ? Omit<FactoryWithContextualQueriesOutput<Keys, Output>, '_def'>
+    : Output extends DynamicQueryKeySchemaWithContextualQueries
+    ? Omit<QueryFactoryWithContextualQueriesOutput<Keys, Output>, '_def'>
     : Output extends QueryKeyRecord
     ? Omit<FactoryQueryKeyRecordOutput<Keys, Output>, '_def'>
     : never;
 } & DefinitionKey<Keys>;
 
-export type AnyFactoryOutputCallback = DynamicFactoryOutput<[string, ...any[]], DynamicKey>;
-
-type StaticFactoryOutput<
+type DynamicMutationFactoryOutput<
   Keys extends AnyMutableOrReadonlyArray,
-  Property extends FactoryProperty,
+  Generator extends MutationDynamicKey,
+  Output extends ReturnType<Generator> = ReturnType<Generator>,
+> = {
+  (...args: Parameters<Generator>): Output extends [...infer TupleResult] | readonly [...infer TupleResult]
+    ? Omit<MutationOptions<[...Keys, ...TupleResult], MutateFunction>, 'mutationFn'>
+    : Output extends DynamicMutationFactoryWithContextualMutationsSchema
+    ? Omit<FactoryMutationOptionsWithContextualQueriesOutput<Keys, Output>, '_def'>
+    : Output extends DynamicMutationFactorySchema
+    ? Omit<FactoryMutationOptionsOutput<Keys, Output>, '_def'>
+    : Output extends DynamicMutationKeySchemaWithContextualMutations
+    ? Omit<MutationFactoryWithContextualQueriesOutput<Keys, Output>, '_def'>
+    : Output extends MutationKeyRecord
+    ? Omit<FactoryMutationKeyRecordOutput<Keys, Output>, '_def'>
+    : never;
+} & DefinitionKey<Keys>;
+
+export type AnyQueryFactoryOutputCallback = DynamicQueryFactoryOutput<[string, ...any[]], QueryDynamicKey>;
+export type AnyMutationFactoryOutputCallback = DynamicMutationFactoryOutput<[string, ...any[]], MutationDynamicKey>;
+
+type StaticQueryFactoryOutput<
+  Keys extends AnyMutableOrReadonlyArray,
+  Property extends QueryFactoryProperty,
 > = Property extends null
   ? Omit<QueryOptions<Keys, QueryFunction>, 'queryFn'>
   : Property extends [...infer Result] | readonly [...infer Result]
   ? DefinitionKey<Keys> & Omit<QueryOptions<[...Keys, ...Result], QueryFunction>, 'queryFn'>
   : Property extends QueryFactoryWithContextualQueriesSchema
   ? FactoryQueryOptionsWithContextualQueriesOutput<Keys, Property>
-  : Property extends QueryFactorySchema
+  : Property extends $QueryFactorySchema
   ? FactoryQueryOptionsOutput<Keys, Property>
-  : Property extends KeySchemaWithContextualQueries
-  ? FactoryWithContextualQueriesOutput<Keys, Property>
+  : Property extends QueryKeySchemaWithContextualQueries
+  ? QueryFactoryWithContextualQueriesOutput<Keys, Property>
   : Property extends NullableQueryKeyRecord
   ? FactoryQueryKeyRecordOutput<Keys, Property>
   : never;
 
-type FactoryOutput<Key extends string, Schema extends FactorySchema> = DefinitionKey<[Key]> & {
-  [P in keyof Schema]: Schema[P] extends DynamicKey
-    ? DynamicFactoryOutput<[Key, P], Schema[P]>
-    : Schema[P] extends FactoryProperty
-    ? StaticFactoryOutput<[Key, P], Schema[P]>
+type StaticMutationFactoryOutput<
+  Keys extends AnyMutableOrReadonlyArray,
+  Property extends MutationFactoryProperty,
+> = Property extends null
+  ? Omit<MutationOptions<Keys, MutateFunction>, 'mutationFn'>
+  : Property extends [...infer Result] | readonly [...infer Result]
+  ? DefinitionKey<Keys> & Omit<MutationOptions<[...Keys, ...Result], MutateFunction>, 'mutationFn'>
+  : Property extends MutationFactoryWithContextualMutationsSchema
+  ? FactoryMutationOptionsWithContextualQueriesOutput<Keys, Property>
+  : Property extends $MutationFactorySchema
+  ? FactoryMutationOptionsOutput<Keys, Property>
+  : Property extends MutationKeySchemaWithContextualMutations
+  ? MutationFactoryWithContextualQueriesOutput<Keys, Property>
+  : Property extends NullableMutationKeyRecord
+  ? FactoryMutationKeyRecordOutput<Keys, Property>
+  : never;
+
+type QueryFactoryOutput<Key extends string, Schema extends QueryFactorySchema> = DefinitionKey<[Key]> & {
+  [P in keyof Schema]: Schema[P] extends QueryDynamicKey
+    ? DynamicQueryFactoryOutput<[Key, P], Schema[P]>
+    : Schema[P] extends QueryFactoryProperty
+    ? StaticQueryFactoryOutput<[Key, P], Schema[P]>
+    : never;
+};
+
+type MutationFactoryOutput<Key extends string, Schema extends MutationFactorySchema> = DefinitionKey<[Key]> & {
+  [P in keyof Schema]: Schema[P] extends MutationDynamicKey
+    ? DynamicMutationFactoryOutput<[Key, P], Schema[P]>
+    : Schema[P] extends MutationFactoryProperty
+    ? StaticMutationFactoryOutput<[Key, P], Schema[P]>
     : never;
 };
 
@@ -215,30 +390,61 @@ export type DefinitionKey<Key extends AnyMutableOrReadonlyArray> = {
   _def: readonly [...Key];
 };
 
-export type QueryKeyFactoryResult<Key extends string, Schema extends FactorySchema> = FactoryOutput<Key, Schema>;
+export type QueryKeyFactoryResult<Key extends string, Schema extends QueryFactorySchema> = QueryFactoryOutput<
+  Key,
+  Schema
+>;
+
+export type MutationKeyFactoryResult<Key extends string, Schema extends MutationFactorySchema> = MutationFactoryOutput<
+  Key,
+  Schema
+>;
 
 export type AnyQueryKeyFactoryResult = DefinitionKey<[string]> | QueryKeyFactoryResult<string, any>;
+export type AnyMutationKeyFactoryResult = DefinitionKey<[string]> | MutationKeyFactoryResult<string, any>;
 
 type inferRecordQueryKeys<Target extends object> = {
   [P in Exclude<keyof Target, 'queryFn'>]: Target[P] extends AnyMutableOrReadonlyArray
     ? Target[P]
     : Target[P] extends object
     ? {
-        [K in keyof Target[P]]: inferSchemaProperty<Target[P][K]>;
+        [K in keyof Target[P]]: inferQuerySchemaProperty<Target[P][K]>;
       }
     : never;
 };
 
-type inferSchemaProperty<Value> = Value extends AnyMutableOrReadonlyArray
+type inferRecordMutationKeys<Target extends object> = {
+  [P in Exclude<keyof Target, 'mutationFn'>]: Target[P] extends AnyMutableOrReadonlyArray
+    ? Target[P]
+    : Target[P] extends object
+    ? {
+        [K in keyof Target[P]]: inferMutationSchemaProperty<Target[P][K]>;
+      }
+    : never;
+};
+
+type inferQuerySchemaProperty<Value> = Value extends AnyMutableOrReadonlyArray
   ? Value
-  : Value extends StaticFactoryOutput<any[], any>
+  : Value extends StaticQueryFactoryOutput<any[], any>
   ? inferRecordQueryKeys<Value>
-  : Value extends AnyFactoryOutputCallback
+  : Value extends AnyQueryFactoryOutputCallback
   ? Record<'_def', Value['_def']> & inferRecordQueryKeys<ReturnType<Value>>
   : never;
 
+type inferMutationSchemaProperty<Value> = Value extends AnyMutableOrReadonlyArray
+  ? Value
+  : Value extends StaticMutationFactoryOutput<any[], any>
+  ? inferRecordMutationKeys<Value>
+  : Value extends AnyMutationFactoryOutputCallback
+  ? Record<'_def', Value['_def']> & inferRecordMutationKeys<ReturnType<Value>>
+  : never;
+
 export type inferQueryKeys<Schema extends AnyQueryKeyFactoryResult> = {
-  [P in keyof Schema]: MergeInsertions<inferSchemaProperty<Schema[P]>>;
+  [P in keyof Schema]: MergeInsertions<inferQuerySchemaProperty<Schema[P]>>;
+};
+
+export type inferMutationKeys<Schema extends AnyMutationKeyFactoryResult> = {
+  [P in keyof Schema]: MergeInsertions<inferMutationSchemaProperty<Schema[P]>>;
 };
 
 export type StoreFromMergedQueryKeys<
@@ -250,10 +456,10 @@ export type StoreFromMergedQueryKeys<
       [P in QueryKeyFactoryResults[CurrentIndex]['_def'][0]]: QueryKeyFactoryResults[CurrentIndex];
     } & StoreFromMergedQueryKeys<QueryKeyFactoryResults, Add<CurrentIndex, 1>>;
 
-export type QueryKeyStoreSchema = Record<string, null | FactorySchema>;
+export type QueryKeyStoreSchema = Record<string, null | QueryFactorySchema>;
 
 export type QueryKeyStore<StoreSchema extends QueryKeyStoreSchema> = {
-  [P in keyof StoreSchema & string]: StoreSchema[P] extends FactorySchema
+  [P in keyof StoreSchema & string]: StoreSchema[P] extends QueryFactorySchema
     ? QueryKeyFactoryResult<P, StoreSchema[P]>
     : DefinitionKey<[P]>;
 };
