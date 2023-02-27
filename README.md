@@ -37,7 +37,7 @@ Start by defining the query keys for the features of your app:
 ```ts
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 
-// if your prefer to declare everything in one file
+// if you prefer to declare everything in one file
 export const queries = createQueryKeyStore({
   users: {
     all: null,
