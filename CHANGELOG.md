@@ -1,5 +1,15 @@
 # @lukemorales/query-key-factory
 
+## 1.2.0
+
+### Minor Changes
+
+- [#51](https://github.com/lukemorales/query-key-factory/pull/51) [`142024d`](https://github.com/lukemorales/query-key-factory/commit/142024d484141904bac0b80b0a45576f1be24a98) Thanks [@s-bondarenko](https://github.com/s-bondarenko)! - Implemented `create-mutation-keys` function for creating of mutation keys
+
+### Patch Changes
+
+- [#51](https://github.com/lukemorales/query-key-factory/pull/51) [`142024d`](https://github.com/lukemorales/query-key-factory/commit/142024d484141904bac0b80b0a45576f1be24a98) Thanks [@s-bondarenko](https://github.com/s-bondarenko)! - Added possibility to merge mutation keys with query keys
+
 ## 1.1.0
 
 ### Minor Changes
