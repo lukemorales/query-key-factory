@@ -2,31 +2,31 @@ import { omitPrototype } from './internals';
 import { assertSchemaKeys } from './internals/assert-schema-keys';
 import type {
   DefinitionKey,
-  QueryFactorySchema,
-  QueryKeyFactoryResult,
+  MutationFactorySchema,
+  MutationKeyFactoryResult,
   ValidateFactory,
-  AnyQueryFactoryOutputCallback,
-  AnyQueryKey,
+  AnyMutationFactoryOutputCallback,
+  AnyMutationKey,
 } from './types';
 
-export function createQueryKeys<Key extends string>(queryDef: Key): DefinitionKey<[Key]>;
-export function createQueryKeys<Key extends string, Schema extends QueryFactorySchema>(
-  queryDef: Key,
+export function createMutationKeys<Key extends string>(mutationDef: Key): DefinitionKey<[Key]>;
+export function createMutationKeys<Key extends string, Schema extends MutationFactorySchema>(
+  mutationDef: Key,
   schema: ValidateFactory<Schema>,
-): QueryKeyFactoryResult<Key, Schema>;
-export function createQueryKeys<Key extends string, Schema extends QueryFactorySchema>(
-  queryDef: Key,
+): MutationKeyFactoryResult<Key, Schema>;
+export function createMutationKeys<Key extends string, Schema extends MutationFactorySchema>(
+  mutationDef: Key,
   schema?: ValidateFactory<Schema>,
-): DefinitionKey<[Key]> | QueryKeyFactoryResult<Key, Schema> {
+): DefinitionKey<[Key]> | MutationKeyFactoryResult<Key, Schema> {
   const defKey: DefinitionKey<[Key]> = {
-    _def: [queryDef] as const,
+    _def: [mutationDef] as const,
   };
 
   if (schema == null) {
     return omitPrototype(defKey);
   }
 
-  const transformSchema = <$Factory extends QueryFactorySchema>(factory: $Factory, mainKey: AnyQueryKey) => {
+  const transformSchema = <$Factory extends MutationFactorySchema>(factory: $Factory, mainKey: AnyMutationKey) => {
     type $FactoryProperty = keyof $Factory;
 
     const keys = assertSchemaKeys(factory);
@@ -39,27 +39,25 @@ export function createQueryKeys<Key extends string, Schema extends QueryFactoryS
       let yieldValue: any;
 
       if (typeof value === 'function') {
-        const resultCallback: AnyQueryFactoryOutputCallback = (...args) => {
+        const resultCallback: AnyMutationFactoryOutputCallback = (...args) => {
           const result = value(...args);
 
           if (isReadonlyArray(result)) {
             return omitPrototype({
-              queryKey: [...key, ...result] as const,
+              mutationKey: [...key, ...result] as const,
             });
           }
 
-          const innerKey = [...key, ...result.queryKey] as const;
+          const innerKey = [...key, ...result.mutationKey] as const;
 
-          if ('queryFn' in result) {
-            // type $QueryFnContext = Omit<QueryFunctionContext<typeof innerKey, any>, 'queryKey'>;
-
+          if ('mutationFn' in result) {
             const queryOptions = {
-              queryKey: innerKey,
-              queryFn: result.queryFn,
+              mutationKey: innerKey,
+              mutationFn: result.mutationFn,
             };
 
-            if ('contextQueries' in result) {
-              const transformedSchema = transformSchema(result.contextQueries, innerKey);
+            if ('contextMutations' in result) {
+              const transformedSchema = transformSchema(result.contextMutations, innerKey);
 
               return omitPrototype({
                 _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
@@ -72,17 +70,17 @@ export function createQueryKeys<Key extends string, Schema extends QueryFactoryS
             });
           }
 
-          if ('contextQueries' in result) {
-            const transformedSchema = transformSchema(result.contextQueries, innerKey);
+          if ('contextMutations' in result) {
+            const transformedSchema = transformSchema(result.contextMutations, innerKey);
 
             return omitPrototype({
               _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
-              queryKey: innerKey,
+              mutationKey: innerKey,
             });
           }
 
           return omitPrototype({
-            queryKey: innerKey,
+            mutationKey: innerKey,
           });
         };
 
@@ -91,26 +89,24 @@ export function createQueryKeys<Key extends string, Schema extends QueryFactoryS
         yieldValue = resultCallback;
       } else if (value == null) {
         yieldValue = omitPrototype({
-          queryKey: key,
+          mutationKey: key,
         });
       } else if (isReadonlyArray(value)) {
         yieldValue = omitPrototype({
           _def: key,
-          queryKey: [...key, ...value] as const,
+          mutationKey: [...key, ...value] as const,
         });
-      } else if ('queryFn' in value) {
-        // type $QueryFnContext = Omit<QueryFunctionContext<typeof innerKey, any>, 'queryKey'>;
-
-        const innerDefKey = { ...(value.queryKey ? { _def: key } : undefined) };
-        const innerKey = [...key, ...(value.queryKey ?? [])] as const;
+      } else if ('mutationFn' in value) {
+        const innerDefKey = { ...(value.mutationKey ? { _def: key } : undefined) };
+        const innerKey = [...key, ...(value.mutationKey ?? [])] as const;
 
         const queryOptions = {
-          queryKey: innerKey,
-          queryFn: value.queryFn,
+          mutationKey: innerKey,
+          mutationFn: value.mutationFn,
         };
 
-        if ('contextQueries' in value) {
-          const transformedSchema = transformSchema(value.contextQueries, innerKey);
+        if ('contextMutations' in value) {
+          const transformedSchema = transformSchema(value.contextMutations, innerKey);
 
           yieldValue = omitPrototype({
             _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
@@ -120,23 +116,23 @@ export function createQueryKeys<Key extends string, Schema extends QueryFactoryS
         } else {
           yieldValue = omitPrototype({ ...innerDefKey, ...queryOptions });
         }
-      } else if ('contextQueries' in value) {
-        const innerDefKey = { ...(value.queryKey ? { _def: key } : undefined) };
-        const innerKey = [...key, ...(value.queryKey ?? [])] as const;
+      } else if ('contextMutations' in value) {
+        const innerDefKey = { ...(value.mutationKey ? { _def: key } : undefined) };
+        const innerKey = [...key, ...(value.mutationKey ?? [])] as const;
 
-        const transformedSchema = transformSchema(value.contextQueries, innerKey);
+        const transformedSchema = transformSchema(value.contextMutations, innerKey);
 
         yieldValue = omitPrototype({
           _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
-          queryKey: innerKey,
+          mutationKey: innerKey,
           ...innerDefKey,
         });
       } else {
-        const innerDefKey = { ...(value.queryKey ? { _def: key } : undefined) };
-        const innerKey = [...key, ...(value.queryKey ?? [])] as const;
+        const innerDefKey = { ...(value.mutationKey ? { _def: key } : undefined) };
+        const innerKey = [...key, ...(value.mutationKey ?? [])] as const;
 
         yieldValue = omitPrototype({
-          queryKey: innerKey,
+          mutationKey: innerKey,
           ...innerDefKey,
         });
       }
