@@ -48,7 +48,7 @@ export function createQueryKeys<Key extends string, Schema extends QueryFactoryS
             });
           }
 
-          const innerKey = [...key, ...result.queryKey] as const;
+          const innerKey = [...key, ...(result.queryKey || [])] as const;
 
           if ('queryFn' in result) {
             // type $QueryFnContext = Omit<QueryFunctionContext<typeof innerKey, any>, 'queryKey'>;

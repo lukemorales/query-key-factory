@@ -55,11 +55,11 @@ type DynamicMutationKeySchemaWithContextualMutations = MutationKeyRecord & {
   contextMutations: MutationFactorySchema;
 };
 
-type DynamicQueryFactorySchema = QueryKeyRecord & {
+type DynamicQueryFactorySchema = Partial<QueryKeyRecord> & {
   queryFn: QueryFunction;
 };
 
-type DynamicMutationFactorySchema = MutationKeyRecord & {
+type DynamicMutationFactorySchema = Partial<MutationKeyRecord> & {
   mutationFn: MutateFunction;
 };
 
