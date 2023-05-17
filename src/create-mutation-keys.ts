@@ -48,7 +48,7 @@ export function createMutationKeys<Key extends string, Schema extends MutationFa
             });
           }
 
-          const innerKey = [...key, ...result.mutationKey] as const;
+          const innerKey = [...key, ...(result.mutationKey || [])] as const;
 
           if ('mutationFn' in result) {
             const queryOptions = {
