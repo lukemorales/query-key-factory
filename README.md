@@ -170,7 +170,7 @@ export const todos = createQueryKeys('todos', {
 // {
 //   _def: ['todos'],
 //   detail: (todoId: string) => {
-//     queryKey: ['todos', 'todo', todoId],
+//     queryKey: ['todos', 'detail', todoId],
 //   },
 //   list: (filters: TodoFilters) => {
 //     queryKey: ['todos', 'list', { filters }],
@@ -228,7 +228,7 @@ export const users = createQueryKeys('users', {
 //     queryFn: (ctx: QueryFunctionContext) => api.getUser(userId),
 //     _ctx: {
 //       likes: {
-//         queryKey: ['users', 'detail, userId, 'likes'],
+//         queryKey: ['users', 'detail', userId, 'likes'],
 //         queryFn: (ctx: QueryFunctionContext) => api.getUserLikes(userId),
 //       },
 //     },
