@@ -1,7 +1,7 @@
-import { MutateFunction } from '@tanstack/query-core';
+import type { MutateFunction } from '@tanstack/query-core';
 
 import { createMutationKeys } from './create-mutation-keys';
-import { inferQueryKeys } from './types';
+import type { inferQueryKeys } from './utility-types';
 
 describe('createMutationKeys', () => {
   describe('when called only with the key argument', () => {

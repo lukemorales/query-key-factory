@@ -1,13 +1,12 @@
-import { omitPrototype } from './internals';
-import { assertSchemaKeys } from './internals/assert-schema-keys';
+import { assertSchemaKeys, omitPrototype } from './internals';
 import type {
-  DefinitionKey,
   QueryFactorySchema,
   QueryKeyFactoryResult,
   ValidateFactory,
   AnyQueryFactoryOutputCallback,
   AnyQueryKey,
-} from './types';
+} from './create-query-keys.types';
+import { DefinitionKey } from './types';
 
 export function createQueryKeys<Key extends string>(queryDef: Key): DefinitionKey<[Key]>;
 export function createQueryKeys<Key extends string, Schema extends QueryFactorySchema>(

@@ -1,9 +1,9 @@
-import { QueryFunction } from '@tanstack/query-core';
+import type { QueryFunction } from '@tanstack/query-core';
 
-import { createMutationKeys } from './create-mutation-keys';
 import { createQueryKeys } from './create-query-keys';
 import { mergeQueryKeys } from './merge-query-keys';
-import { inferQueryKeyStore } from './types';
+import type { inferQueryKeyStore } from './utility-types';
+import { createMutationKeys } from './create-mutation-keys';
 
 describe('mergeQueryKeys', () => {
   interface Filters {
@@ -22,6 +22,7 @@ describe('mergeQueryKeys', () => {
         },
       }),
     });
+
     const todosKeys = createQueryKeys('todos', {
       detail: (todoId: string) => [todoId],
       list: (filters: Filters) => [{ filters }],

@@ -1,19 +1,30 @@
-import { omitPrototype } from './internals';
-import { assertSchemaKeys } from './internals/assert-schema-keys';
 import type {
-  DefinitionKey,
   MutationFactorySchema,
   MutationKeyFactoryResult,
-  ValidateFactory,
   AnyMutationFactoryOutputCallback,
+  ValidateFactory,
   AnyMutationKey,
-} from './types';
+} from './create-mutation-keys.types';
+import { assertSchemaKeys, omitPrototype } from './internals';
+import type { DefinitionKey } from './types';
 
+/**
+ * @deprecated the type inference for this function is broken and will be fixed in the next patch version
+ * or possibly removed and implemented differently in a major version
+ */
 export function createMutationKeys<Key extends string>(mutationDef: Key): DefinitionKey<[Key]>;
+/**
+ * @deprecated the type inference for this function is broken and will be fixed in the next patch version
+ * or possibly removed and implemented differently in a major version
+ */
 export function createMutationKeys<Key extends string, Schema extends MutationFactorySchema>(
   mutationDef: Key,
   schema: ValidateFactory<Schema>,
 ): MutationKeyFactoryResult<Key, Schema>;
+/**
+ * @deprecated the type inference for this function is broken and will be fixed in the next patch version
+ * or possibly removed and implemented differently in a major version
+ */
 export function createMutationKeys<Key extends string, Schema extends MutationFactorySchema>(
   mutationDef: Key,
   schema?: ValidateFactory<Schema>,

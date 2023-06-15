@@ -1,5 +1,15 @@
-import { omitPrototype } from './internals';
-import { AnyMutationKeyFactoryResult, AnyQueryKeyFactoryResult, StoreFromMergedQueryKeys } from './types';
+import { AnyMutationKeyFactoryResult } from './create-mutation-keys.types';
+import type { AnyQueryKeyFactoryResult } from './create-query-keys.types';
+import { type Add, omitPrototype } from './internals';
+
+type StoreFromMergedQueryKeys<
+  QueryOrMutationKeyFactoryResults extends Array<AnyQueryKeyFactoryResult | AnyMutationKeyFactoryResult>,
+  CurrentIndex extends number = 0,
+> = QueryOrMutationKeyFactoryResults[CurrentIndex] extends null | undefined
+  ? {}
+  : {
+      [P in QueryOrMutationKeyFactoryResults[CurrentIndex]['_def'][0]]: QueryOrMutationKeyFactoryResults[CurrentIndex];
+    } & StoreFromMergedQueryKeys<QueryOrMutationKeyFactoryResults, Add<CurrentIndex, 1>>;
 
 export function mergeQueryKeys<
   QueryKeyFactoryResults extends Array<AnyQueryKeyFactoryResult | AnyMutationKeyFactoryResult>,

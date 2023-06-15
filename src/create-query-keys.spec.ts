@@ -1,7 +1,7 @@
-import { QueryFunction } from '@tanstack/query-core';
+import type { QueryFunction } from '@tanstack/query-core';
 
 import { createQueryKeys } from './create-query-keys';
-import { inferQueryKeys } from './types';
+import type { inferQueryKeys } from './utility-types';
 
 describe('createQueryKeys', () => {
   describe('when called only with the key argument', () => {
