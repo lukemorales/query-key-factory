@@ -1,9 +1,8 @@
-import { QueryFunction } from '@tanstack/query-core';
+import type { QueryFunction } from '@tanstack/query-core';
 
-import { createMutationKeys } from './create-mutation-keys';
 import { createQueryKeys } from './create-query-keys';
 import { mergeQueryKeys } from './merge-query-keys';
-import { inferQueryKeyStore } from './types';
+import type { inferQueryKeyStore } from './utility-types';
 
 describe('mergeQueryKeys', () => {
   interface Filters {
@@ -28,24 +27,20 @@ describe('mergeQueryKeys', () => {
       search: (query: string, limit: number) => [query, limit],
     });
 
-    const todosMutationKeys = createMutationKeys('todos', {
-      remove: (todoId: string) => [todoId],
-    });
-
-    return { usersKeys, todosKeys, todosMutationKeys };
+    return { usersKeys, todosKeys };
   };
 
   it('merges the keys into a single store object using the "_def" values as the properties', () => {
-    const { usersKeys, todosKeys, todosMutationKeys } = performSetup();
+    const { usersKeys, todosKeys } = performSetup();
 
-    const store = mergeQueryKeys(usersKeys, todosKeys, todosMutationKeys);
+    const store = mergeQueryKeys(usersKeys, todosKeys);
 
     expect(store).toHaveProperty('users');
     expect(store).toHaveProperty('todos');
 
     expect(store).toEqual({
       users: usersKeys,
-      todos: { ...todosKeys, ...todosMutationKeys },
+      todos: todosKeys,
     });
 
     expect(store).toHaveType<{
@@ -86,11 +81,6 @@ describe('mergeQueryKeys', () => {
         ) => {
           queryKey: readonly ['todos', 'search', string, number];
         });
-        remove: {
-          _def: readonly ['todos', 'remove'];
-        } & ((todoId: string) => {
-          mutationKey: readonly ['todos', 'remove', string];
-        });
       };
     }>();
 
@@ -123,10 +113,6 @@ describe('mergeQueryKeys', () => {
         search: {
           _def: readonly ['todos', 'search'];
           queryKey: readonly ['todos', 'search', string, number];
-        };
-        remove: {
-          _def: readonly ['todos', 'remove'];
-          mutationKey: readonly ['todos', 'remove', string];
         };
       };
     }>();

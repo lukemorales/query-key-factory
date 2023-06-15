@@ -1,20 +1,19 @@
 import { omitPrototype } from './internals';
-import { assertSchemaKeys } from './internals/assert-schema-keys';
 import type {
   DefinitionKey,
-  QueryFactorySchema,
+  FactorySchema,
   QueryKeyFactoryResult,
   ValidateFactory,
-  AnyQueryFactoryOutputCallback,
+  AnyFactoryOutputCallback,
   AnyQueryKey,
-} from './types';
+} from './create-query-keys.types';
 
 export function createQueryKeys<Key extends string>(queryDef: Key): DefinitionKey<[Key]>;
-export function createQueryKeys<Key extends string, Schema extends QueryFactorySchema>(
+export function createQueryKeys<Key extends string, Schema extends FactorySchema>(
   queryDef: Key,
   schema: ValidateFactory<Schema>,
 ): QueryKeyFactoryResult<Key, Schema>;
-export function createQueryKeys<Key extends string, Schema extends QueryFactorySchema>(
+export function createQueryKeys<Key extends string, Schema extends FactorySchema>(
   queryDef: Key,
   schema?: ValidateFactory<Schema>,
 ): DefinitionKey<[Key]> | QueryKeyFactoryResult<Key, Schema> {
@@ -26,7 +25,7 @@ export function createQueryKeys<Key extends string, Schema extends QueryFactoryS
     return omitPrototype(defKey);
   }
 
-  const transformSchema = <$Factory extends QueryFactorySchema>(factory: $Factory, mainKey: AnyQueryKey) => {
+  const transformSchema = <$Factory extends FactorySchema>(factory: $Factory, mainKey: AnyQueryKey) => {
     type $FactoryProperty = keyof $Factory;
 
     const keys = assertSchemaKeys(factory);
@@ -39,7 +38,7 @@ export function createQueryKeys<Key extends string, Schema extends QueryFactoryS
       let yieldValue: any;
 
       if (typeof value === 'function') {
-        const resultCallback: AnyQueryFactoryOutputCallback = (...args) => {
+        const resultCallback: AnyFactoryOutputCallback = (...args) => {
           const result = value(...args);
 
           if (isReadonlyArray(result)) {
@@ -153,3 +152,18 @@ export function createQueryKeys<Key extends string, Schema extends QueryFactoryS
     ...defKey,
   });
 }
+
+/**
+ * @internal ensures no keys provided by the user starts with an _underscore `_`_
+ */
+const assertSchemaKeys = (schema: Record<string, unknown>): string[] => {
+  const keys = Object.keys(schema).sort((a, b) => a.localeCompare(b));
+
+  const hasKeyInShapeOfInternalKey = keys.some((key) => key.startsWith('_'));
+
+  if (hasKeyInShapeOfInternalKey) {
+    throw new Error('Keys that start with "_" are reserved for the Query Key Factory');
+  }
+
+  return keys;
+};

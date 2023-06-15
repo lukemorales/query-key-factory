@@ -1,6 +1,14 @@
 import { createQueryKeys } from './create-query-keys';
+import type { FactorySchema, QueryKeyFactoryResult, DefinitionKey } from './create-query-keys.types';
 import { omitPrototype } from './internals';
-import { QueryKeyStoreSchema, QueryKeyStore } from './types';
+
+type QueryKeyStoreSchema = Record<string, null | FactorySchema>;
+
+export type QueryKeyStore<StoreSchema extends QueryKeyStoreSchema> = {
+  [P in keyof StoreSchema & string]: StoreSchema[P] extends FactorySchema
+    ? QueryKeyFactoryResult<P, StoreSchema[P]>
+    : DefinitionKey<[P]>;
+};
 
 export function createQueryKeyStore<StoreSchema extends QueryKeyStoreSchema>(
   schema: StoreSchema,

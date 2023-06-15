@@ -1,7 +1,7 @@
-import { QueryFunction } from '@tanstack/query-core';
+import type { QueryFunction } from '@tanstack/query-core';
 
 import { createQueryKeyStore } from './create-query-key-store';
-import { inferQueryKeyStore } from './types';
+import type { inferQueryKeyStore } from './utility-types';
 
 describe('createQueryKeyStore', () => {
   it('creates a store from the schema provided as argument', () => {

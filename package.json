@@ -36,17 +36,18 @@
     "prerelease": "run-p build test:ci",
     "release": "changeset publish"
   },
-  "dependencies": {},
   "peerDependencies": {
-    "@tanstack/query-core": "^4.0.0"
+    "@tanstack/query-core": ">= 4.0.0",
+    "@tanstack/react-query": ">= 4.0.0"
   },
   "devDependencies": {
-    "@tanstack/query-core": "^4.0.0",
     "@changesets/changelog-github": "^0.4.6",
     "@changesets/cli": "^2.24.4",
     "@commitlint/cli": "^17.1.2",
     "@commitlint/config-conventional": "^17.1.0",
     "@lukemorales/jest-type-matchers": "^0.2.1",
+    "@tanstack/query-core": ">= 4.0.0",
+    "@tanstack/react-query": ">= 4.0.0",
     "@types/node": "^18.8.3",
     "@typescript-eslint/eslint-plugin": "5.36.2",
     "@typescript-eslint/parser": "5.36.2",
