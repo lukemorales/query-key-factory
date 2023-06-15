@@ -1,4 +1,5 @@
 import type { UseQueryOptions } from '@tanstack/react-query';
+
 import type { QueryKeyStore } from './create-query-key-store';
 import type {
   AnyQueryFactoryOutputCallback,
