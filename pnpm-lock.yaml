@@ -1,7 +1,7 @@
 lockfileVersion: '6.0'
 
 settings:
-  autoInstallPeers: true
+  autoInstallPeers: false
   excludeLinksFromLockfile: false
 
 devDependencies:
@@ -21,10 +21,10 @@ devDependencies:
     specifier: ^0.2.1
     version: 0.2.1(typescript@4.8.4)
   '@tanstack/query-core':
-    specifier: ^4.0.0
+    specifier: '>= 4.0.0'
     version: 4.15.0
   '@tanstack/react-query':
-    specifier: ^4.0.0
+    specifier: '>= 4.0.0'
     version: 4.29.13(react@18.2.0)
   '@types/node':
     specifier: ^18.8.3
