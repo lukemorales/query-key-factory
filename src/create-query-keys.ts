@@ -1,19 +1,19 @@
 import { assertSchemaKeys, omitPrototype } from './internals';
 import type {
-  FactorySchema,
+  QueryFactorySchema,
   QueryKeyFactoryResult,
   ValidateFactory,
-  AnyFactoryOutputCallback,
+  AnyQueryFactoryOutputCallback,
   AnyQueryKey,
 } from './create-query-keys.types';
 import { DefinitionKey } from './types';
 
 export function createQueryKeys<Key extends string>(queryDef: Key): DefinitionKey<[Key]>;
-export function createQueryKeys<Key extends string, Schema extends FactorySchema>(
+export function createQueryKeys<Key extends string, Schema extends QueryFactorySchema>(
   queryDef: Key,
   schema: ValidateFactory<Schema>,
 ): QueryKeyFactoryResult<Key, Schema>;
-export function createQueryKeys<Key extends string, Schema extends FactorySchema>(
+export function createQueryKeys<Key extends string, Schema extends QueryFactorySchema>(
   queryDef: Key,
   schema?: ValidateFactory<Schema>,
 ): DefinitionKey<[Key]> | QueryKeyFactoryResult<Key, Schema> {
@@ -25,7 +25,7 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
     return omitPrototype(defKey);
   }
 
-  const transformSchema = <$Factory extends FactorySchema>(factory: $Factory, mainKey: AnyQueryKey) => {
+  const transformSchema = <$Factory extends QueryFactorySchema>(factory: $Factory, mainKey: AnyQueryKey) => {
     type $FactoryProperty = keyof $Factory;
 
     const keys = assertSchemaKeys(factory);
@@ -38,7 +38,7 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
       let yieldValue: any;
 
       if (typeof value === 'function') {
-        const resultCallback: AnyFactoryOutputCallback = (...args) => {
+        const resultCallback: AnyQueryFactoryOutputCallback = (...args) => {
           const result = value(...args);
 
           if (isReadonlyArray(result)) {

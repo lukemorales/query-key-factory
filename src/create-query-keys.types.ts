@@ -10,20 +10,20 @@ type NullableQueryKeyRecord = Record<'queryKey', KeyTuple | null>;
 type QueryKeyRecord = Record<'queryKey', KeyTuple>;
 
 type KeySchemaWithContextualQueries = NullableQueryKeyRecord & {
-  contextQueries: FactorySchema;
+  contextQueries: QueryFactorySchema;
 };
 
-type QueryFactorySchema = NullableQueryKeyRecord & {
+type $QueryFactorySchema = NullableQueryKeyRecord & {
   queryFn: QueryFunction;
 };
 
 type QueryFactoryWithContextualQueriesSchema = NullableQueryKeyRecord & {
   queryFn: QueryFunction;
-  contextQueries: FactorySchema;
+  contextQueries: QueryFactorySchema;
 };
 
 type DynamicKeySchemaWithContextualQueries = QueryKeyRecord & {
-  contextQueries: FactorySchema;
+  contextQueries: QueryFactorySchema;
 };
 
 type DynamicQueryFactorySchema = QueryKeyRecord & {
@@ -32,7 +32,7 @@ type DynamicQueryFactorySchema = QueryKeyRecord & {
 
 type DynamicQueryFactoryWithContextualQueriesSchema = QueryKeyRecord & {
   queryFn: QueryFunction;
-  contextQueries: FactorySchema;
+  contextQueries: QueryFactorySchema;
 };
 
 type FactoryProperty =
@@ -40,7 +40,7 @@ type FactoryProperty =
   | KeyTuple
   | NullableQueryKeyRecord
   | KeySchemaWithContextualQueries
-  | QueryFactorySchema
+  | $QueryFactorySchema
   | QueryFactoryWithContextualQueriesSchema;
 
 type DynamicKey = (
@@ -52,11 +52,11 @@ type DynamicKey = (
   | QueryKeyRecord
   | KeyTuple;
 
-export type FactorySchema = Record<string, FactoryProperty | DynamicKey>;
+export type QueryFactorySchema = Record<string, FactoryProperty | DynamicKey>;
 
-type InvalidSchema<Schema extends FactorySchema> = Omit<Schema, `_${string}`>;
+type InvalidSchema<Schema extends QueryFactorySchema> = Omit<Schema, `_${string}`>;
 
-export type ValidateFactory<Schema extends FactorySchema> = Schema extends {
+export type ValidateFactory<Schema extends QueryFactorySchema> = Schema extends {
   [P in ExtractInternalKeys<Schema>]: Schema[P];
 }
   ? InvalidSchema<Schema>
@@ -121,7 +121,7 @@ type FactoryQueryKeyRecordOutput<
 
 type FactoryQueryOptionsOutput<
   BaseKey extends AnyMutableOrReadonlyArray,
-  Schema extends QueryFactorySchema | DynamicQueryFactorySchema,
+  Schema extends $QueryFactorySchema | DynamicQueryFactorySchema,
   SchemaQueryKey extends Schema['queryKey'] = Schema['queryKey'],
   QueryFn extends Schema['queryFn'] = Schema['queryFn'],
   ComposedKey extends AnyMutableOrReadonlyArray = ComposeQueryKey<BaseKey, ExtractNullableKey<SchemaQueryKey>>,
@@ -175,7 +175,7 @@ type DynamicFactoryOutput<
     : never;
 } & DefinitionKey<Keys>;
 
-export type AnyFactoryOutputCallback = DynamicFactoryOutput<[string, ...any[]], DynamicKey>;
+export type AnyQueryFactoryOutputCallback = DynamicFactoryOutput<[string, ...any[]], DynamicKey>;
 
 export type StaticFactoryOutput<
   Keys extends AnyMutableOrReadonlyArray,
@@ -186,7 +186,7 @@ export type StaticFactoryOutput<
   ? DefinitionKey<Keys> & Omit<QueryOptionsStruct<[...Keys, ...Result], QueryFunction>, 'queryFn'>
   : Property extends QueryFactoryWithContextualQueriesSchema
   ? FactoryQueryOptionsWithContextualQueriesOutput<Keys, Property>
-  : Property extends QueryFactorySchema
+  : Property extends $QueryFactorySchema
   ? FactoryQueryOptionsOutput<Keys, Property>
   : Property extends KeySchemaWithContextualQueries
   ? FactoryWithContextualQueriesOutput<Keys, Property>
@@ -194,7 +194,7 @@ export type StaticFactoryOutput<
   ? FactoryQueryKeyRecordOutput<Keys, Property>
   : never;
 
-type FactoryOutput<Key extends string, Schema extends FactorySchema> = DefinitionKey<[Key]> & {
+type FactoryOutput<Key extends string, Schema extends QueryFactorySchema> = DefinitionKey<[Key]> & {
   [P in keyof Schema]: Schema[P] extends DynamicKey
     ? DynamicFactoryOutput<[Key, P], Schema[P]>
     : Schema[P] extends FactoryProperty
@@ -202,6 +202,6 @@ type FactoryOutput<Key extends string, Schema extends FactorySchema> = Definitio
     : never;
 };
 
-export type QueryKeyFactoryResult<Key extends string, Schema extends FactorySchema> = FactoryOutput<Key, Schema>;
+export type QueryKeyFactoryResult<Key extends string, Schema extends QueryFactorySchema> = FactoryOutput<Key, Schema>;
 
 export type AnyQueryKeyFactoryResult = DefinitionKey<[string]> | QueryKeyFactoryResult<string, any>;

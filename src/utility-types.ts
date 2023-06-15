@@ -1,7 +1,7 @@
 import type { UseQueryOptions } from '@tanstack/react-query';
 import type { QueryKeyStore } from './create-query-key-store';
 import type {
-  AnyFactoryOutputCallback,
+  AnyQueryFactoryOutputCallback,
   AnyQueryKeyFactoryResult,
   QueryOptionsStruct,
   StaticFactoryOutput,
@@ -41,7 +41,7 @@ type inferSchemaProperty<Value> = Value extends AnyMutableOrReadonlyArray
   ? inferRecordQueryKeys<Value>
   : Value extends StaticMutationFactoryOutput<any[], any>
   ? inferRecordMutationKeys<Value>
-  : Value extends AnyFactoryOutputCallback
+  : Value extends AnyQueryFactoryOutputCallback
   ? Record<'_def', Value['_def']> & inferRecordQueryKeys<ReturnType<Value>>
   : Value extends AnyMutationFactoryOutputCallback
   ? Record<'_def', Value['_def']> & inferRecordMutationKeys<ReturnType<Value>>
