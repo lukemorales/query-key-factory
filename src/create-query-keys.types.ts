@@ -1,18 +1,9 @@
 import type { QueryFunction } from '@tanstack/query-core';
 
 import type { ExtractInternalKeys } from './internals';
-
-type MergeInsertions<T> = T extends object ? { [K in keyof T]: MergeInsertions<T[K]> } : T;
+import type { KeyTuple, AnyMutableOrReadonlyArray, DefinitionKey } from './types';
 
 export type AnyQueryKey = readonly [string, ...any[]];
-
-type AnyMutableOrReadonlyArray = any[] | readonly any[];
-
-type Tuple = [ValidValue, ...Array<ValidValue | undefined>];
-
-export type KeyTuple = Tuple | Readonly<Tuple>;
-
-export type ValidValue = string | number | boolean | object | bigint;
 
 type NullableQueryKeyRecord = Record<'queryKey', KeyTuple | null>;
 
@@ -186,7 +177,7 @@ type DynamicFactoryOutput<
 
 export type AnyFactoryOutputCallback = DynamicFactoryOutput<[string, ...any[]], DynamicKey>;
 
-type StaticFactoryOutput<
+export type StaticFactoryOutput<
   Keys extends AnyMutableOrReadonlyArray,
   Property extends FactoryProperty,
 > = Property extends null
@@ -211,32 +202,6 @@ type FactoryOutput<Key extends string, Schema extends FactorySchema> = Definitio
     : never;
 };
 
-export type DefinitionKey<Key extends AnyMutableOrReadonlyArray> = {
-  _def: readonly [...Key];
-};
-
 export type QueryKeyFactoryResult<Key extends string, Schema extends FactorySchema> = FactoryOutput<Key, Schema>;
 
 export type AnyQueryKeyFactoryResult = DefinitionKey<[string]> | QueryKeyFactoryResult<string, any>;
-
-type inferRecordQueryKeys<Target extends object> = {
-  [P in Exclude<keyof Target, 'queryFn'>]: Target[P] extends AnyMutableOrReadonlyArray
-    ? Target[P]
-    : Target[P] extends object
-    ? {
-        [K in keyof Target[P]]: inferSchemaProperty<Target[P][K]>;
-      }
-    : never;
-};
-
-type inferSchemaProperty<Value> = Value extends AnyMutableOrReadonlyArray
-  ? Value
-  : Value extends StaticFactoryOutput<any[], any>
-  ? inferRecordQueryKeys<Value>
-  : Value extends AnyFactoryOutputCallback
-  ? Record<'_def', Value['_def']> & inferRecordQueryKeys<ReturnType<Value>>
-  : never;
-
-export type inferQueryKeys<Schema extends AnyQueryKeyFactoryResult> = {
-  [P in keyof Schema]: MergeInsertions<inferSchemaProperty<Schema[P]>>;
-};

@@ -1,12 +1,12 @@
-import { omitPrototype } from './internals';
+import { assertSchemaKeys, omitPrototype } from './internals';
 import type {
-  DefinitionKey,
   FactorySchema,
   QueryKeyFactoryResult,
   ValidateFactory,
   AnyFactoryOutputCallback,
   AnyQueryKey,
 } from './create-query-keys.types';
+import { DefinitionKey } from './types';
 
 export function createQueryKeys<Key extends string>(queryDef: Key): DefinitionKey<[Key]>;
 export function createQueryKeys<Key extends string, Schema extends FactorySchema>(
@@ -152,18 +152,3 @@ export function createQueryKeys<Key extends string, Schema extends FactorySchema
     ...defKey,
   });
 }
-
-/**
- * @internal ensures no keys provided by the user starts with an _underscore `_`_
- */
-const assertSchemaKeys = (schema: Record<string, unknown>): string[] => {
-  const keys = Object.keys(schema).sort((a, b) => a.localeCompare(b));
-
-  const hasKeyInShapeOfInternalKey = keys.some((key) => key.startsWith('_'));
-
-  if (hasKeyInShapeOfInternalKey) {
-    throw new Error('Keys that start with "_" are reserved for the Query Key Factory');
-  }
-
-  return keys;
-};

@@ -3,6 +3,7 @@ import type { QueryFunction } from '@tanstack/query-core';
 import { createQueryKeys } from './create-query-keys';
 import { mergeQueryKeys } from './merge-query-keys';
 import type { inferQueryKeyStore } from './utility-types';
+import { createMutationKeys } from './create-mutation-keys';
 
 describe('mergeQueryKeys', () => {
   interface Filters {
@@ -21,26 +22,31 @@ describe('mergeQueryKeys', () => {
         },
       }),
     });
+
     const todosKeys = createQueryKeys('todos', {
       detail: (todoId: string) => [todoId],
       list: (filters: Filters) => [{ filters }],
       search: (query: string, limit: number) => [query, limit],
     });
 
-    return { usersKeys, todosKeys };
+    const todosMutationKeys = createMutationKeys('todos', {
+      remove: (todoId: string) => [todoId],
+    });
+
+    return { usersKeys, todosKeys, todosMutationKeys };
   };
 
   it('merges the keys into a single store object using the "_def" values as the properties', () => {
-    const { usersKeys, todosKeys } = performSetup();
+    const { usersKeys, todosKeys, todosMutationKeys } = performSetup();
 
-    const store = mergeQueryKeys(usersKeys, todosKeys);
+    const store = mergeQueryKeys(usersKeys, todosKeys, todosMutationKeys);
 
     expect(store).toHaveProperty('users');
     expect(store).toHaveProperty('todos');
 
     expect(store).toEqual({
       users: usersKeys,
-      todos: todosKeys,
+      todos: { ...todosKeys, ...todosMutationKeys },
     });
 
     expect(store).toHaveType<{
@@ -81,6 +87,11 @@ describe('mergeQueryKeys', () => {
         ) => {
           queryKey: readonly ['todos', 'search', string, number];
         });
+        remove: {
+          _def: readonly ['todos', 'remove'];
+        } & ((todoId: string) => {
+          mutationKey: readonly ['todos', 'remove', string];
+        });
       };
     }>();
 
@@ -113,6 +124,10 @@ describe('mergeQueryKeys', () => {
         search: {
           _def: readonly ['todos', 'search'];
           queryKey: readonly ['todos', 'search', string, number];
+        };
+        remove: {
+          _def: readonly ['todos', 'remove'];
+          mutationKey: readonly ['todos', 'remove', string];
         };
       };
     }>();

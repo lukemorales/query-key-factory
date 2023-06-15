@@ -1,5 +1,6 @@
 import { createQueryKeys } from './create-query-keys';
-import type { FactorySchema, QueryKeyFactoryResult, DefinitionKey } from './create-query-keys.types';
+import type { FactorySchema, QueryKeyFactoryResult } from './create-query-keys.types';
+import type { DefinitionKey } from './types';
 import { omitPrototype } from './internals';
 
 type QueryKeyStoreSchema = Record<string, null | FactorySchema>;
