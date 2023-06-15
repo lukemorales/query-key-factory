@@ -1,5 +1,11 @@
 # @lukemorales/query-key-factory
 
+## 1.3.0
+
+### Minor Changes
+
+- [#65](https://github.com/lukemorales/query-key-factory/pull/65) [`1cf53a1`](https://github.com/lukemorales/query-key-factory/commit/1cf53a1b2e2e81ab0f38834183ca076939878505) Thanks [@lukemorales](https://github.com/lukemorales)! - Refactor codebase and expose new `TypedUseQueryOptions` type
+
 ## 1.2.0
 
 ### Minor Changes
