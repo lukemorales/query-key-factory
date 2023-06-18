@@ -1,5 +1,11 @@
 # @lukemorales/query-key-factory
 
+## 1.3.1
+
+### Patch Changes
+
+- [#67](https://github.com/lukemorales/query-key-factory/pull/67) [`e6b8389`](https://github.com/lukemorales/query-key-factory/commit/e6b8389742229bda5b28c233212bc7a87513b52e) Thanks [@lukemorales](https://github.com/lukemorales)! - Loosen types for `TypedUseQueryOptions` and allow inference of dynamic query options generation
+
 ## 1.3.0
 
 ### Minor Changes
