@@ -1,10 +1,9 @@
-import type { UseQueryOptions } from '@tanstack/react-query';
+import type { QueryFunction, UseQueryOptions } from '@tanstack/react-query';
 
 import type { QueryKeyStore } from './create-query-key-store';
 import type {
   AnyQueryFactoryOutputCallback,
   AnyQueryKeyFactoryResult,
-  QueryOptionsStruct,
   StaticFactoryOutput,
 } from './create-query-keys.types';
 import type {
@@ -56,7 +55,19 @@ export type inferQueryKeyStore<Store extends QueryKeyStore<any>> = {
   [P in keyof Store]: inferQueryKeys<Store[P]>;
 };
 
+type LooseQueryOptionsStruct = { queryKey: AnyMutableOrReadonlyArray; queryFn: QueryFunction<any, any> };
+
+type LooseQueryOptionsStructGenerator = (...args: any[]) => LooseQueryOptionsStruct;
+
 export type TypedUseQueryOptions<
-  Options extends QueryOptionsStruct<any, any>,
-  Data = Awaited<ReturnType<Options['queryFn']>>,
-> = UseQueryOptions<Awaited<ReturnType<Options['queryFn']>>, unknown, Data, Options['queryKey']>;
+  Options extends LooseQueryOptionsStruct | LooseQueryOptionsStructGenerator,
+  Data = Options extends LooseQueryOptionsStructGenerator
+    ? Awaited<ReturnType<ReturnType<Options>['queryFn']>>
+    : Options extends LooseQueryOptionsStruct
+    ? Awaited<ReturnType<Options['queryFn']>>
+    : never,
+> = Options extends LooseQueryOptionsStructGenerator
+  ? UseQueryOptions<Awaited<ReturnType<ReturnType<Options>['queryFn']>>, unknown, Data, ReturnType<Options>['queryKey']>
+  : Options extends LooseQueryOptionsStruct
+  ? UseQueryOptions<Awaited<ReturnType<Options['queryFn']>>, unknown, Data, Options['queryKey']>
+  : never;
