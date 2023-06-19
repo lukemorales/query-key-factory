@@ -1,5 +1,11 @@
 # @lukemorales/query-key-factory
 
+## 1.3.2
+
+### Patch Changes
+
+- [#70](https://github.com/lukemorales/query-key-factory/pull/70) [`1a9f74d`](https://github.com/lukemorales/query-key-factory/commit/1a9f74d413abaec74914de0bde8d1dfa6a1ac3d5) Thanks [@lukemorales](https://github.com/lukemorales)! - Fix type inference allowing extra keys
+
 ## 1.3.1
 
 ### Patch Changes
