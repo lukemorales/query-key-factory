@@ -60,7 +60,9 @@ export type ValidateFactory<Schema extends QueryFactorySchema> = Schema extends 
   [P in ExtractInternalKeys<Schema>]: Schema[P];
 }
   ? InvalidSchema<Schema>
-  : Schema;
+  : {
+      [P in keyof Schema]: Schema[P];
+    };
 
 type ExtractNullableKey<Key extends KeyTuple | null | undefined> = Key extends
   | [...infer Value]

@@ -36,19 +36,19 @@ describe('createQueryKeys', () => {
     it('throws an error if the schema contains a key that starts with "_"', () => {
       expect(() =>
         createQueryKeys('users', {
-          // @ts-expect-error: "_def" should not be an allowed key
+          // @ts-expect-error: "_myOwnKey" should not be an allowed key
           _def: ['trying to override the _def key value'],
           prop: null,
         }),
-      ).toThrow('Keys that start with "_" are reserved for the Query Key Factory');
+      ).toThrow('Keys that start with "_" are reserved for Query Key Factory');
 
       expect(() =>
         createQueryKeys('users', {
-          // @ts-expect-error: "_my_own_key" should not be an allowed key
-          _my_own_key: ['trying to create with the shape of an internal key'],
+          // @ts-expect-error: "_myOwnKey" should not be an allowed key
+          _myOwnKey: ['trying to create with the shape of an internal key'],
           prop: null,
         }),
-      ).toThrow('Keys that start with "_" are reserved for the Query Key Factory');
+      ).toThrow('Keys that start with "_" are reserved for Query Key Factory');
     });
 
     describe('when the schema property is not a function', () => {
