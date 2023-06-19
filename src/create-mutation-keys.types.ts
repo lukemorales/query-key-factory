@@ -1,6 +1,6 @@
 import type { MutateFunction } from '@tanstack/query-core';
 
-import type { ExtractInternalKeys } from './internals';
+import type { ExtractInternalKeys, InternalKey } from './internals';
 import type { KeyTuple, AnyMutableOrReadonlyArray, DefinitionKey } from './types';
 
 export type AnyMutationKey = readonly [string, ...any[]];
@@ -54,7 +54,7 @@ type MutationDynamicKey = (
 
 export type MutationFactorySchema = Record<string, MutationFactoryProperty | MutationDynamicKey>;
 
-type InvalidSchema<Schema extends MutationFactorySchema> = Omit<Schema, `_${string}`>;
+type InvalidSchema<Schema extends MutationFactorySchema> = Omit<Schema, InternalKey>;
 
 export type ValidateFactory<Schema extends MutationFactorySchema> = Schema extends {
   [P in ExtractInternalKeys<Schema>]: Schema[P];

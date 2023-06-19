@@ -7,7 +7,7 @@ export const assertSchemaKeys = (schema: Record<string, unknown>): string[] => {
   const hasKeyInShapeOfInternalKey = keys.some((key) => key.startsWith('_'));
 
   if (hasKeyInShapeOfInternalKey) {
-    throw new Error('Keys that start with "_" are reserved for the Query Key Factory');
+    throw new Error('Keys that start with "_" are reserved for Query Key Factory');
   }
 
   return keys;

@@ -12,11 +12,11 @@ export function createQueryKeys<Key extends string>(queryDef: Key): DefinitionKe
 export function createQueryKeys<Key extends string, Schema extends QueryFactorySchema>(
   queryDef: Key,
   schema: ValidateFactory<Schema>,
-): QueryKeyFactoryResult<Key, Schema>;
+): QueryKeyFactoryResult<Key, ValidateFactory<Schema>>;
 export function createQueryKeys<Key extends string, Schema extends QueryFactorySchema>(
   queryDef: Key,
   schema?: ValidateFactory<Schema>,
-): DefinitionKey<[Key]> | QueryKeyFactoryResult<Key, Schema> {
+): DefinitionKey<[Key]> | QueryKeyFactoryResult<Key, ValidateFactory<Schema>> {
   const defKey: DefinitionKey<[Key]> = {
     _def: [queryDef] as const,
   };

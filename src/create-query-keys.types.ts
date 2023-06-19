@@ -1,6 +1,6 @@
 import type { QueryFunction } from '@tanstack/query-core';
 
-import type { ExtractInternalKeys } from './internals';
+import type { ExtractInternalKeys, InternalKey } from './internals';
 import type { KeyTuple, AnyMutableOrReadonlyArray, DefinitionKey } from './types';
 
 export type AnyQueryKey = readonly [string, ...any[]];
@@ -54,13 +54,15 @@ type DynamicKey = (
 
 export type QueryFactorySchema = Record<string, FactoryProperty | DynamicKey>;
 
-type InvalidSchema<Schema extends QueryFactorySchema> = Omit<Schema, `_${string}`>;
+type InvalidSchema<Schema extends QueryFactorySchema> = Omit<Schema, InternalKey>;
 
 export type ValidateFactory<Schema extends QueryFactorySchema> = Schema extends {
   [P in ExtractInternalKeys<Schema>]: Schema[P];
 }
   ? InvalidSchema<Schema>
-  : Schema;
+  : {
+      [P in keyof Schema]: Schema[P];
+    };
 
 type ExtractNullableKey<Key extends KeyTuple | null | undefined> = Key extends
   | [...infer Value]
