@@ -40,7 +40,7 @@ describe('createMutationKeys', () => {
           _def: ['trying to override the _def key value'],
           prop: null,
         }),
-      ).toThrow('Keys that start with "_" are reserved for the Query Key Factory');
+      ).toThrow('Keys that start with "_" are reserved for Query Key Factory');
 
       expect(() =>
         createMutationKeys('users', {
@@ -48,7 +48,7 @@ describe('createMutationKeys', () => {
           _my_own_key: ['trying to create with the shape of an internal key'],
           prop: null,
         }),
-      ).toThrow('Keys that start with "_" are reserved for the Query Key Factory');
+      ).toThrow('Keys that start with "_" are reserved for Query Key Factory');
     });
 
     describe('when the schema property is not a function', () => {

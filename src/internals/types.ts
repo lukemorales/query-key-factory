@@ -1,7 +1,12 @@
 /**
  * @internal
  */
-export type ExtractInternalKeys<T extends Record<string, unknown>> = Extract<keyof T, `_${string}`>;
+export type InternalKey = `_${string}`;
+
+/**
+ * @internal
+ */
+export type ExtractInternalKeys<T extends Record<string, unknown>> = Extract<keyof T, InternalKey>;
 
 /**
  * Math types for iterating over `mergeQueryKeys` schemas and
