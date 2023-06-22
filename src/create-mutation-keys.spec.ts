@@ -182,7 +182,7 @@ describe('createMutationKeys', () => {
 
               expect(sut.prop).toHaveType<{
                 mutationKey: readonly ['test', 'prop'];
-                mutationFn: MutateFunction<boolean, unknown, undefined, unknown>;
+                mutationFn: MutateFunction<boolean, unknown, undefined>;
               }>();
             });
           });
@@ -207,7 +207,7 @@ describe('createMutationKeys', () => {
               expect(sut.prop).toHaveType<{
                 _def: readonly ['test', 'prop'];
                 mutationKey: readonly ['test', 'prop', string];
-                mutationFn: MutateFunction<boolean, unknown, undefined, unknown>;
+                mutationFn: MutateFunction<boolean, unknown, undefined>;
               }>();
             });
           });
@@ -323,7 +323,7 @@ describe('createMutationKeys', () => {
                   };
                 };
                 mutationKey: readonly ['test', 'prop'];
-                mutationFn: MutateFunction<boolean, unknown, undefined, unknown>;
+                mutationFn: MutateFunction<boolean, unknown, undefined>;
               }>();
             });
           });
@@ -361,7 +361,7 @@ describe('createMutationKeys', () => {
                   };
                 };
                 mutationKey: readonly ['test', 'prop', string];
-                mutationFn: MutateFunction<boolean, unknown, undefined, unknown>;
+                mutationFn: MutateFunction<boolean, unknown, undefined>;
               }>();
             });
           });
@@ -481,7 +481,7 @@ describe('createMutationKeys', () => {
             expect(sut.prop).toHaveType<
               { _def: readonly ['test', 'prop'] } & ((value: string) => {
                 mutationKey: readonly ['test', 'prop', string];
-                mutationFn: MutateFunction<boolean, unknown, undefined, unknown>;
+                mutationFn: MutateFunction<boolean, unknown, undefined>;
               })
             >();
 
@@ -575,7 +575,7 @@ describe('createMutationKeys', () => {
                   };
                 };
                 mutationKey: readonly ['test', 'prop', string];
-                mutationFn: MutateFunction<boolean, unknown, undefined, unknown>;
+                mutationFn: MutateFunction<boolean, unknown, undefined>;
               })
             >();
 

@@ -81,7 +81,7 @@ export type MutationOptionsStruct<
   FetcherVariables extends Parameters<Fetcher>[0] = Parameters<Fetcher>[0],
 > = {
   mutationKey: readonly [...Keys];
-  mutationFn: MutateFunction<Awaited<FetcherResult>, unknown, FetcherVariables, unknown>;
+  mutationFn: MutateFunction<Awaited<FetcherResult>, unknown, FetcherVariables>;
 };
 
 type MutationFactoryWithContextualQueriesOutput<
@@ -162,19 +162,20 @@ type DynamicMutationFactoryOutput<
   Keys extends AnyMutableOrReadonlyArray,
   Generator extends MutationDynamicKey,
   Output extends ReturnType<Generator> = ReturnType<Generator>,
-> = {
-  (...args: Parameters<Generator>): Output extends [...infer TupleResult] | readonly [...infer TupleResult]
-    ? Omit<MutationOptionsStruct<[...Keys, ...TupleResult], MutateFunction>, 'mutationFn'>
-    : Output extends DynamicMutationFactoryWithContextualMutationsSchema
-    ? Omit<FactoryMutationOptionsWithContextualQueriesOutput<Keys, Output>, '_def'>
-    : Output extends DynamicMutationFactorySchema
-    ? Omit<FactoryMutationOptionsOutput<Keys, Output>, '_def'>
-    : Output extends DynamicMutationKeySchemaWithContextualMutations
-    ? Omit<MutationFactoryWithContextualQueriesOutput<Keys, Output>, '_def'>
-    : Output extends MutationKeyRecord
-    ? Omit<FactoryMutationKeyRecordOutput<Keys, Output>, '_def'>
-    : never;
-} & DefinitionKey<Keys>;
+> = ((
+  ...args: Parameters<Generator>
+) => Output extends [...infer TupleResult] | readonly [...infer TupleResult]
+  ? Omit<MutationOptionsStruct<[...Keys, ...TupleResult], MutateFunction>, 'mutationFn'>
+  : Output extends DynamicMutationFactoryWithContextualMutationsSchema
+  ? Omit<FactoryMutationOptionsWithContextualQueriesOutput<Keys, Output>, '_def'>
+  : Output extends DynamicMutationFactorySchema
+  ? Omit<FactoryMutationOptionsOutput<Keys, Output>, '_def'>
+  : Output extends DynamicMutationKeySchemaWithContextualMutations
+  ? Omit<MutationFactoryWithContextualQueriesOutput<Keys, Output>, '_def'>
+  : Output extends MutationKeyRecord
+  ? Omit<FactoryMutationKeyRecordOutput<Keys, Output>, '_def'>
+  : never) &
+  DefinitionKey<Keys>;
 
 export type AnyMutationFactoryOutputCallback = DynamicMutationFactoryOutput<[string, ...any[]], MutationDynamicKey>;
 

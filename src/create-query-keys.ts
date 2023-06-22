@@ -6,7 +6,7 @@ import type {
   AnyQueryFactoryOutputCallback,
   AnyQueryKey,
 } from './create-query-keys.types';
-import { DefinitionKey } from './types';
+import { type DefinitionKey } from './types';
 
 export function createQueryKeys<Key extends string>(queryDef: Key): DefinitionKey<[Key]>;
 export function createQueryKeys<Key extends string, Schema extends QueryFactorySchema>(

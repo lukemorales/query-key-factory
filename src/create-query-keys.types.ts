@@ -163,19 +163,20 @@ type DynamicFactoryOutput<
   Keys extends AnyMutableOrReadonlyArray,
   Generator extends DynamicKey,
   Output extends ReturnType<Generator> = ReturnType<Generator>,
-> = {
-  (...args: Parameters<Generator>): Output extends [...infer TupleResult] | readonly [...infer TupleResult]
-    ? Omit<QueryOptionsStruct<[...Keys, ...TupleResult], QueryFunction>, 'queryFn'>
-    : Output extends DynamicQueryFactoryWithContextualQueriesSchema
-    ? Omit<FactoryQueryOptionsWithContextualQueriesOutput<Keys, Output>, '_def'>
-    : Output extends DynamicQueryFactorySchema
-    ? Omit<FactoryQueryOptionsOutput<Keys, Output>, '_def'>
-    : Output extends DynamicKeySchemaWithContextualQueries
-    ? Omit<FactoryWithContextualQueriesOutput<Keys, Output>, '_def'>
-    : Output extends QueryKeyRecord
-    ? Omit<FactoryQueryKeyRecordOutput<Keys, Output>, '_def'>
-    : never;
-} & DefinitionKey<Keys>;
+> = ((
+  ...args: Parameters<Generator>
+) => Output extends [...infer TupleResult] | readonly [...infer TupleResult]
+  ? Omit<QueryOptionsStruct<[...Keys, ...TupleResult], QueryFunction>, 'queryFn'>
+  : Output extends DynamicQueryFactoryWithContextualQueriesSchema
+  ? Omit<FactoryQueryOptionsWithContextualQueriesOutput<Keys, Output>, '_def'>
+  : Output extends DynamicQueryFactorySchema
+  ? Omit<FactoryQueryOptionsOutput<Keys, Output>, '_def'>
+  : Output extends DynamicKeySchemaWithContextualQueries
+  ? Omit<FactoryWithContextualQueriesOutput<Keys, Output>, '_def'>
+  : Output extends QueryKeyRecord
+  ? Omit<FactoryQueryKeyRecordOutput<Keys, Output>, '_def'>
+  : never) &
+  DefinitionKey<Keys>;
 
 export type AnyQueryFactoryOutputCallback = DynamicFactoryOutput<[string, ...any[]], DynamicKey>;
 

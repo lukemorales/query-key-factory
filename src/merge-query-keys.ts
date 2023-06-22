@@ -1,4 +1,4 @@
-import { AnyMutationKeyFactoryResult } from './create-mutation-keys.types';
+import { type AnyMutationKeyFactoryResult } from './create-mutation-keys.types';
 import type { AnyQueryKeyFactoryResult } from './create-query-keys.types';
 import { type Add, omitPrototype } from './internals';
 
