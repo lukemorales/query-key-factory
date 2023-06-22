@@ -37,7 +37,10 @@
     "release": "changeset publish"
   },
   "eslintConfig": {
-    "extends": "lukemorales/oss"
+    "extends": [
+      "lukemorales/oss",
+      "lukemorales/jest"
+    ]
   },
   "peerDependencies": {
     "@tanstack/query-core": ">= 4.0.0",
