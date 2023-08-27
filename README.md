@@ -178,6 +178,17 @@ export const todos = createQueryKeys('todos', {
 // }
 ```
 
+`queryKey` can be optional when there's no need for a dynamic query:
+
+```ts
+export const users = createQueryKeys('users', {
+  list: {
+    queryKey: null,
+    queryFn: () => api.getUsers(),
+  }
+});
+```
+
 ### Generate the query options you need to run `useQuery`
 Declare your `queryKey` and your `queryFn` together, and have easy access to everything you need to run a query:
 
