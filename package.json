@@ -32,7 +32,7 @@
     "test": "vitest --passWithNoTests",
     "test:ci": "pnpm run test:coverage --run",
     "test:coverage": "pnpm run test --coverage",
-    "prepare": "is-ci || husky install",
+    "prepare": "is-ci || husky install && run-p build",
     "prerelease": "run-p build test:ci",
     "release": "changeset publish"
   },
