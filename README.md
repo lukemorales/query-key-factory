@@ -244,7 +244,7 @@ export function useUserLikes(userId: string) {
 Easy way to access the serializable key scope and invalidate all cache for that context:
 
 ```ts
-users.detail({ status: 'completed' }).queryKey; // => ['users', 'detail', userId]
+users.detail(userId).queryKey; // => ['users', 'detail', userId]
 users.detail._def; // => ['users', 'detail']
 ```
 
