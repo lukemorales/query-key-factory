@@ -434,6 +434,37 @@ describe('createQueryKeys', () => {
       });
 
       describe('when the function returns an object', () => {
+        describe('when the object has extra unintended properties', () => {
+          it('creates a callback that returns the expected shape without the extra unintended properties', () => {
+            const sut = createQueryKeys('test', {
+              // @ts-expect-error prop return is invalid as staleTime is an invalidKey
+              prop: (value: string) => ({
+                queryKey: [value],
+                staleTime: Infinity,
+              }),
+            });
+
+            const result = sut.prop('value');
+            expect(result).toEqual({
+              queryKey: ['test', 'prop', 'value'],
+            });
+
+            expect(sut.prop).toHaveStrictType<
+              { _def: readonly ['test', 'prop'] } & ((value: string) => {
+                queryKey: readonly ['test', 'prop', string];
+              })
+            >();
+
+            expect({} as inferQueryKeys<typeof sut>).toHaveStrictType<{
+              _def: readonly ['test'];
+              prop: {
+                _def: readonly ['test', 'prop'];
+                queryKey: readonly ['test', 'prop', string];
+              };
+            }>();
+          });
+        });
+
         describe('when the object has "queryKey"', () => {
           it('creates a callback that returns "queryKey"', () => {
             const sut = createQueryKeys('test', {

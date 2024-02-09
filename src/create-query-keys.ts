@@ -1,22 +1,22 @@
-import { assertSchemaKeys, omitPrototype } from './internals';
 import type {
+  AnyQueryFactoryOutputCallback,
+  AnyQueryKey,
   QueryFactorySchema,
   QueryKeyFactoryResult,
   ValidateFactory,
-  AnyQueryFactoryOutputCallback,
-  AnyQueryKey,
 } from './create-query-keys.types';
+import { assertSchemaKeys, omitPrototype } from './internals';
 import { type DefinitionKey } from './types';
 
 export function createQueryKeys<Key extends string>(queryDef: Key): DefinitionKey<[Key]>;
 export function createQueryKeys<Key extends string, Schema extends QueryFactorySchema>(
   queryDef: Key,
   schema: ValidateFactory<Schema>,
-): QueryKeyFactoryResult<Key, ValidateFactory<Schema>>;
+): QueryKeyFactoryResult<Key, Schema>;
 export function createQueryKeys<Key extends string, Schema extends QueryFactorySchema>(
   queryDef: Key,
   schema?: ValidateFactory<Schema>,
-): DefinitionKey<[Key]> | QueryKeyFactoryResult<Key, ValidateFactory<Schema>> {
+): DefinitionKey<[Key]> | QueryKeyFactoryResult<Key, Schema> {
   const defKey: DefinitionKey<[Key]> = {
     _def: [queryDef] as const,
   };
@@ -145,7 +145,7 @@ export function createQueryKeys<Key extends string, Schema extends QueryFactoryS
     }, new Map<$FactoryProperty, $Factory[$FactoryProperty]>());
   };
 
-  const transformedSchema = transformSchema(schema, defKey._def);
+  const transformedSchema = transformSchema(schema as QueryFactorySchema, defKey._def);
 
   return omitPrototype({
     ...Object.fromEntries(transformedSchema),
