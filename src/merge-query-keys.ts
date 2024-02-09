@@ -5,11 +5,14 @@ import type { Prettify } from './types';
 
 type StoreFromMergedQueryKeys<
   QueryOrMutationKeyFactoryResults extends Array<AnyQueryKeyFactoryResult | AnyMutationKeyFactoryResult>,
-> = QueryOrMutationKeyFactoryResults extends [
-  infer First extends AnyQueryKeyFactoryResult | AnyMutationKeyFactoryResult,
-  ...infer Rest extends AnyQueryKeyFactoryResult[] | AnyMutationKeyFactoryResult[],
-]
-  ? { [P in First['_def'][0]]: First } & StoreFromMergedQueryKeys<Rest>
+> =
+  QueryOrMutationKeyFactoryResults extends (
+    [
+      infer First extends AnyQueryKeyFactoryResult | AnyMutationKeyFactoryResult,
+      ...infer Rest extends AnyQueryKeyFactoryResult[] | AnyMutationKeyFactoryResult[],
+    ]
+  ) ?
+    { [P in First['_def'][0]]: First } & StoreFromMergedQueryKeys<Rest>
   : {};
 
 export function mergeQueryKeys<
