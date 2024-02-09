@@ -21,15 +21,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 🔑 Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 🔧 Install PNPM
-        uses: pnpm/action-setup@v2.2.4
+        uses: pnpm/action-setup@v3
         with:
           version: 7
 
       - name: ♻️ Cache node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: pnpm-cache
         with:
           path: "**/node_modules"
@@ -38,9 +38,9 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: 🛠️ Setup Node and install project dependencies
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '14'
+          node-version: '18'
           check-latest: true
           cache: 'pnpm'
 
@@ -53,17 +53,17 @@ jobs:
     needs: install-deps
     steps:
       - name: 🔑 Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 🔧 Install PNPM
-        uses: pnpm/action-setup@v2.2.4
+        uses: pnpm/action-setup@v3
         with:
           version: 7
 
       - name: 🛠️ Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '14'
+          node-version: '18'
           check-latest: true
           cache: 'pnpm'
 
@@ -89,31 +89,31 @@ jobs:
       published: ${{ steps.changesets.outputs.published }}
     steps:
       - name: 🔑 Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: 🔧 Install PNPM
-        uses: pnpm/action-setup@v2.2.4
+        uses: pnpm/action-setup@v3
         with:
           version: 7
 
       - name: ♻️ Load node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: "**/node_modules"
           key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: ♻️ Load build files
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: "**/dist"
           key: ${{ runner.os }}-build-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: 🛠️ Setup Node for NPM
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '16.14.2'
+          node-version: '18'
           check-latest: true
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
@@ -147,23 +147,23 @@ jobs:
       packages: write
     steps:
       - name: 🔑 Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 🔧 Install PNPM
-        uses: pnpm/action-setup@v2.2.4
+        uses: pnpm/action-setup@v3
         with:
           version: 7
 
       - name: ♻️ Load node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: "**/node_modules"
           key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: 🛠️ Setup Node for GPR
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '16.14.2'
+          node-version: '18'
           check-latest: true
           cache: 'pnpm'
           registry-url: 'https://npm.pkg.github.com'

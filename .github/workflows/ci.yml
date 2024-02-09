@@ -16,15 +16,15 @@ jobs:
     name: 📦 Install dependencies
     steps:
       - name: 🔑 Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 🔧 Install PNPM
-        uses: pnpm/action-setup@v2.2.4
+        uses: pnpm/action-setup@v3
         with:
           version: 7
 
       - name: ♻️ Cache node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: pnpm-cache
         with:
           path: "**/node_modules"
@@ -33,9 +33,9 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: 🛠️ Setup Node and install project dependencies
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '14'
+          node-version: '18'
           check-latest: true
           cache: 'pnpm'
 
@@ -48,30 +48,30 @@ jobs:
     needs: install-deps
     steps:
       - name: 🔑 Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 🔧 Install PNPM
-        uses: pnpm/action-setup@v2.2.4
+        uses: pnpm/action-setup@v3
         with:
           version: 7
 
       - name: ♻️ Restore node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: "**/node_modules"
           key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: ♻️ Restore ESLint Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: eslint-cache
         with:
           path: .eslintcache
           key: ${{ matrix.os }}-eslint-${{ hashFiles('**/*.ts', 'package.json', 'tsconfig.json') }}
 
       - name: 🛠️ Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '14'
+          node-version: '18'
           check-latest: true
           cache: 'pnpm'
 
@@ -88,23 +88,23 @@ jobs:
     needs: install-deps
     steps:
       - name: 🔑 Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 🔧 Install PNPM
-        uses: pnpm/action-setup@v2.2.4
+        uses: pnpm/action-setup@v3
         with:
           version: 7
 
       - name: ♻️ Restore node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: "**/node_modules"
           key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: 🛠️ Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '14'
+          node-version: '18'
           check-latest: true
           cache: 'pnpm'
 
@@ -121,23 +121,23 @@ jobs:
     needs: install-deps
     steps:
       - name: 🔑 Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 🔧 Install PNPM
-        uses: pnpm/action-setup@v2.2.4
+        uses: pnpm/action-setup@v3
         with:
           version: 7
 
       - name: ♻️ Load node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: "**/node_modules"
           key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: 🛠️ Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '14'
+          node-version: '18'
           check-latest: true
           cache: 'pnpm'
 
