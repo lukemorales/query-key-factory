@@ -1,5 +1,11 @@
 # @lukemorales/query-key-factory
 
+## 1.3.3
+
+### Patch Changes
+
+- [`9b5401c`](https://github.com/lukemorales/query-key-factory/commit/9b5401cdd8ff6b3a85074285ab7ed68a6ab3a252) Thanks [@lukemorales](https://github.com/lukemorales)! - Improve `mergeQueryKeys` type inference and improve type-safety for dynamic query keys
+
 ## 1.3.2
 
 ### Patch Changes
@@ -61,7 +67,7 @@
   New in `@lukemorales/query-key-factory` is support for nested keys and generation of query options, adopting the query options overload as first class citizen, in preparation for [React Query v5 roadmap](https://github.com/TanStack/query/discussions/4252).
 
   ```ts
-  const people = createQueryKeys('people', {
+  const people = createQueryKeys("people", {
     person: (id: number) => ({
       queryKey: [id],
       queryFn: () => api.getPerson({ params: { id } }),
@@ -88,7 +94,7 @@
   Each entry outputs an object that can be used in the query options overload in React Query:
 
   ```tsx
-  console.log(people.person('person_01'));
+  console.log(people.person("person_01"));
 
   // => output:
   // {
