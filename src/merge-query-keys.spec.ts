@@ -1,9 +1,9 @@
 import type { QueryFunction } from '@tanstack/query-core';
 
+import { createMutationKeys } from './create-mutation-keys';
 import { createQueryKeys } from './create-query-keys';
 import { mergeQueryKeys } from './merge-query-keys';
 import type { inferQueryKeyStore } from './utility-types';
-import { createMutationKeys } from './create-mutation-keys';
 
 describe('mergeQueryKeys', () => {
   interface Filters {
