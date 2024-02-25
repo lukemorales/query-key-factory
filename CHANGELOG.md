@@ -1,5 +1,11 @@
 # @lukemorales/query-key-factory
 
+## 1.3.4
+
+### Patch Changes
+
+- [`a7eb8d2`](https://github.com/lukemorales/query-key-factory/commit/a7eb8d2339e84f9e910e9899c971be9f40f188a1) Thanks [@lukemorales](https://github.com/lukemorales)! - Fix `contextQueries` not working with possibly undefined values
+
 ## 1.3.3
 
 ### Patch Changes
