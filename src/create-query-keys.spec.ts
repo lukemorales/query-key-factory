@@ -727,7 +727,7 @@ describe('createQueryKeys |> extrapolating "contextQueries" nesting', () => {
           contextQueries: {
             nested1: null,
             nested2: ['context-prop-2'],
-            nested3: (nestedValue: string) => ({
+            nested3: (nestedValue?: string) => ({
               queryKey: [nestedValue],
               contextQueries: {
                 nested4: null,
@@ -770,7 +770,7 @@ describe('createQueryKeys |> extrapolating "contextQueries" nesting', () => {
               _def: readonly ['test', 'prop', string, 'nested2'];
               queryKey: readonly ['test', 'prop', string, 'nested2', string];
             };
-            nested3: { _def: readonly ['test', 'prop', string, 'nested3'] } & ((nestedValue: string) => {
+            nested3: { _def: readonly ['test', 'prop', string, 'nested3'] } & ((nestedValue?: string) => {
               queryKey: readonly ['test', 'prop', string, 'nested3', string];
               _ctx: {
                 nested4: { queryKey: readonly ['test', 'prop', string, 'nested3', string, 'nested4'] };
@@ -793,10 +793,10 @@ describe('createQueryKeys |> extrapolating "contextQueries" nesting', () => {
             };
             nested3: {
               _def: readonly ['test', 'prop', string, 'nested3'];
-              queryKey: readonly ['test', 'prop', string, 'nested3', string];
+              queryKey: readonly ['test', 'prop', string, 'nested3', string | undefined];
               _ctx: {
                 nested4: {
-                  queryKey: readonly ['test', 'prop', string, 'nested3', string, 'nested4'];
+                  queryKey: readonly ['test', 'prop', string, 'nested3', string | undefined, 'nested4'];
                 };
               };
             };

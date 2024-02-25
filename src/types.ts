@@ -1,6 +1,6 @@
 export type AnyMutableOrReadonlyArray = any[] | readonly any[];
 
-export type Tuple = [ValidValue, ...Array<ValidValue | undefined>];
+export type Tuple = [ValidValue | undefined, ...Array<ValidValue | undefined>];
 
 export type KeyTuple = Tuple | Readonly<Tuple>;
 
