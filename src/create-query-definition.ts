@@ -1,4 +1,4 @@
-import { makeQueryOptions, type QueryOptionsWithoutInitialDataResult } from './create-query-options';
+import { type createQueryOptions, type QueryOptionsWithoutInitialDataResult } from './create-query-options';
 import { type Prettify, type QueryDefTag } from './internals';
 import { type AnyTuple, type EmptyKey, type FactoryOptions, type WorkableKey } from './primitives';
 
@@ -38,9 +38,9 @@ type QueryDef<Entity extends string, Schema extends QueryDefSchema> = {
   [Key in keyof Schema & string]: SchemaOptions<Entity, Key, Schema[Key]>;
 } & QueryDefTag;
 
-function createQueryDef<E extends string, T extends QueryDefSchema>(
+function createQueryDefinition<E extends string, T extends QueryDefSchema>(
   entity: E,
-  builder: (makeOptions: makeQueryOptions) => T,
+  builder: (makeOptions: createQueryOptions) => T,
 ): QueryDef<E, T> {
   const def = builder(makeQueryOptions);
 
@@ -52,19 +52,19 @@ function createQueryDef<E extends string, T extends QueryDefSchema>(
         const result = entry(...(args as any));
 
         const [record] = result.queryKey;
-        result.queryKey = [{ $query: [entity, key], ...(record as any) }];
+        result.queryKey = [{ $query: [entity, key], ...record }];
 
         return result;
       };
     } else {
-      (entry as any).queryKey = [{ entity, query: key }];
+      (entry as any).queryKey = [{ $query: [entity, key] }];
     }
   }
 
   return def as any;
 }
 
-const users = createQueryDef('users', (makeOptions) => ({
+const users = createQueryDefinition('users', (makeOptions) => ({
   list: makeOptions({
     queryKey: [],
     queryFn: () => [] as User[],

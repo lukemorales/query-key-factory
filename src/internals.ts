@@ -1,5 +1,5 @@
 /** @internal */
-export type Prettify<T extends object> = {
+export type Prettify<T> = {
   [K in keyof T]: T[K];
 } & {};
 

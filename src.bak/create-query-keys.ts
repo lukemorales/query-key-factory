@@ -1,5 +1,3 @@
-import { makeQueryOptions } from '../src/create-query-options';
-
 import type {
   AnyQueryFactoryOutputCallback,
   AnyQueryKey,
@@ -9,10 +7,6 @@ import type {
 } from './create-query-keys.types';
 import { assertSchemaKeys, omitPrototype } from './internals';
 import { type DefinitionKey } from './types';
-
-const a = makeQueryOptions({
-  queryKey: ['yololo'],
-});
 
 export function createQueryKeys<Key extends string>(queryDef: Key): DefinitionKey<[Key]>;
 export function createQueryKeys<Key extends string, Schema extends QueryFactorySchema>(
