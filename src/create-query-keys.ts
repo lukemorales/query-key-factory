@@ -1,5 +1,3 @@
-import { makeQueryOptions } from '../src/create-query-options';
-
 import type {
   AnyQueryFactoryOutputCallback,
   AnyQueryKey,
@@ -10,16 +8,34 @@ import type {
 import { assertSchemaKeys, omitPrototype } from './internals';
 import { type DefinitionKey } from './types';
 
-const a = makeQueryOptions({
-  queryKey: ['yololo'],
-});
+/**
+ * @deprecated This function will be removed in the next major version.
+ * Please use `defineQueryOperations` instead.
+ */
+export function createQueryKeys<Key extends string>(
+  queryDef: Key,
+): DefinitionKey<[Key]>;
 
-export function createQueryKeys<Key extends string>(queryDef: Key): DefinitionKey<[Key]>;
-export function createQueryKeys<Key extends string, Schema extends QueryFactorySchema>(
+/**
+ * @deprecated This function will be removed in the next major version.
+ * Please use `defineQueryOperations` instead.
+ */
+export function createQueryKeys<
+  Key extends string,
+  Schema extends QueryFactorySchema,
+>(
   queryDef: Key,
   schema: ValidateFactory<Schema>,
 ): QueryKeyFactoryResult<Key, ValidateFactory<Schema>>;
-export function createQueryKeys<Key extends string, Schema extends QueryFactorySchema>(
+
+/**
+ * @deprecated This function will be removed in the next major version.
+ * Please use `defineQueryOperations` instead.
+ */
+export function createQueryKeys<
+  Key extends string,
+  Schema extends QueryFactorySchema,
+>(
   queryDef: Key,
   schema?: ValidateFactory<Schema>,
 ): DefinitionKey<[Key]> | QueryKeyFactoryResult<Key, ValidateFactory<Schema>> {
@@ -31,15 +47,20 @@ export function createQueryKeys<Key extends string, Schema extends QueryFactoryS
     return omitPrototype(defKey);
   }
 
-  const transformSchema = <$Factory extends QueryFactorySchema>(factory: $Factory, mainKey: AnyQueryKey) => {
+  const transformSchema = <$Factory extends QueryFactorySchema>(
+    factory: $Factory,
+    mainKey: AnyQueryKey,
+  ) => {
     type $FactoryProperty = keyof $Factory;
 
     const keys = assertSchemaKeys(factory);
+
     return keys.reduce((factoryMap, factoryKey) => {
       const value = factory[factoryKey];
       const key = [...mainKey, factoryKey] as const;
 
-      const isReadonlyArray = (arg: unknown): arg is readonly any[] => Array.isArray(arg);
+      const isReadonlyArray = (arg: unknown): arg is readonly any[] =>
+        Array.isArray(arg);
 
       let yieldValue: any;
 
@@ -64,7 +85,10 @@ export function createQueryKeys<Key extends string, Schema extends QueryFactoryS
             };
 
             if ('contextQueries' in result) {
-              const transformedSchema = transformSchema(result.contextQueries, innerKey);
+              const transformedSchema = transformSchema(
+                result.contextQueries,
+                innerKey,
+              );
 
               return omitPrototype({
                 _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
@@ -78,7 +102,10 @@ export function createQueryKeys<Key extends string, Schema extends QueryFactoryS
           }
 
           if ('contextQueries' in result) {
-            const transformedSchema = transformSchema(result.contextQueries, innerKey);
+            const transformedSchema = transformSchema(
+              result.contextQueries,
+              innerKey,
+            );
 
             return omitPrototype({
               _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
@@ -115,7 +142,10 @@ export function createQueryKeys<Key extends string, Schema extends QueryFactoryS
         };
 
         if ('contextQueries' in value) {
-          const transformedSchema = transformSchema(value.contextQueries, innerKey);
+          const transformedSchema = transformSchema(
+            value.contextQueries,
+            innerKey,
+          );
 
           yieldValue = omitPrototype({
             _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
@@ -129,7 +159,10 @@ export function createQueryKeys<Key extends string, Schema extends QueryFactoryS
         const innerDefKey = { ...(value.queryKey ? { _def: key } : undefined) };
         const innerKey = [...key, ...(value.queryKey ?? [])] as const;
 
-        const transformedSchema = transformSchema(value.contextQueries, innerKey);
+        const transformedSchema = transformSchema(
+          value.contextQueries,
+          innerKey,
+        );
 
         yieldValue = omitPrototype({
           _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
@@ -147,6 +180,7 @@ export function createQueryKeys<Key extends string, Schema extends QueryFactoryS
       }
 
       factoryMap.set(factoryKey, yieldValue);
+
       return factoryMap;
     }, new Map<$FactoryProperty, $Factory[$FactoryProperty]>());
   };

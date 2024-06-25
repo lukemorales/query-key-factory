@@ -1,31 +1,39 @@
 import type {
+  AnyMutationFactoryOutputCallback,
+  AnyMutationKey,
   MutationFactorySchema,
   MutationKeyFactoryResult,
-  AnyMutationFactoryOutputCallback,
   ValidateFactory,
-  AnyMutationKey,
 } from './create-mutation-keys.types';
 import { assertSchemaKeys, omitPrototype } from './internals';
 import type { DefinitionKey } from './types';
 
 /**
- * @deprecated the type inference for this function is broken and will be fixed in the next patch version
- * or possibly removed and implemented differently in a major version
+ * @deprecated This function implementation is broken and will be removed in the next major version.
+ * Please use `defineQueryOperations` instead to be able to declare mutation options.
  */
-export function createMutationKeys<Key extends string>(mutationDef: Key): DefinitionKey<[Key]>;
+export function createMutationKeys<Key extends string>(
+  mutationDef: Key,
+): DefinitionKey<[Key]>;
 /**
- * @deprecated the type inference for this function is broken and will be fixed in the next patch version
- * or possibly removed and implemented differently in a major version
+ * @deprecated This function implementation is broken and will be removed in the next major version.
+ * Please use `defineQueryOperations` instead to be able to declare mutation options.
  */
-export function createMutationKeys<Key extends string, Schema extends MutationFactorySchema>(
+export function createMutationKeys<
+  Key extends string,
+  Schema extends MutationFactorySchema,
+>(
   mutationDef: Key,
   schema: ValidateFactory<Schema>,
 ): MutationKeyFactoryResult<Key, Schema>;
 /**
- * @deprecated the type inference for this function is broken and will be fixed in the next patch version
- * or possibly removed and implemented differently in a major version
+ * @deprecated This function implementation is broken and will be removed in the next major version.
+ * Please use `defineQueryOperations` instead to be able to declare mutation options.
  */
-export function createMutationKeys<Key extends string, Schema extends MutationFactorySchema>(
+export function createMutationKeys<
+  Key extends string,
+  Schema extends MutationFactorySchema,
+>(
   mutationDef: Key,
   schema?: ValidateFactory<Schema>,
 ): DefinitionKey<[Key]> | MutationKeyFactoryResult<Key, Schema> {
@@ -37,15 +45,20 @@ export function createMutationKeys<Key extends string, Schema extends MutationFa
     return omitPrototype(defKey);
   }
 
-  const transformSchema = <$Factory extends MutationFactorySchema>(factory: $Factory, mainKey: AnyMutationKey) => {
+  const transformSchema = <$Factory extends MutationFactorySchema>(
+    factory: $Factory,
+    mainKey: AnyMutationKey,
+  ) => {
     type $FactoryProperty = keyof $Factory;
 
     const keys = assertSchemaKeys(factory);
+
     return keys.reduce((factoryMap, factoryKey) => {
       const value = factory[factoryKey];
       const key = [...mainKey, factoryKey] as const;
 
-      const isReadonlyArray = (arg: unknown): arg is readonly any[] => Array.isArray(arg);
+      const isReadonlyArray = (arg: unknown): arg is readonly any[] =>
+        Array.isArray(arg);
 
       let yieldValue: any;
 
@@ -68,7 +81,10 @@ export function createMutationKeys<Key extends string, Schema extends MutationFa
             };
 
             if ('contextMutations' in result) {
-              const transformedSchema = transformSchema(result.contextMutations, innerKey);
+              const transformedSchema = transformSchema(
+                result.contextMutations,
+                innerKey,
+              );
 
               return omitPrototype({
                 _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
@@ -82,7 +98,10 @@ export function createMutationKeys<Key extends string, Schema extends MutationFa
           }
 
           if ('contextMutations' in result) {
-            const transformedSchema = transformSchema(result.contextMutations, innerKey);
+            const transformedSchema = transformSchema(
+              result.contextMutations,
+              innerKey,
+            );
 
             return omitPrototype({
               _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
@@ -108,7 +127,9 @@ export function createMutationKeys<Key extends string, Schema extends MutationFa
           mutationKey: [...key, ...value] as const,
         });
       } else if ('mutationFn' in value) {
-        const innerDefKey = { ...(value.mutationKey ? { _def: key } : undefined) };
+        const innerDefKey = {
+          ...(value.mutationKey ? { _def: key } : undefined),
+        };
         const innerKey = [...key, ...(value.mutationKey ?? [])] as const;
 
         const queryOptions = {
@@ -117,7 +138,10 @@ export function createMutationKeys<Key extends string, Schema extends MutationFa
         };
 
         if ('contextMutations' in value) {
-          const transformedSchema = transformSchema(value.contextMutations, innerKey);
+          const transformedSchema = transformSchema(
+            value.contextMutations,
+            innerKey,
+          );
 
           yieldValue = omitPrototype({
             _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
@@ -128,10 +152,15 @@ export function createMutationKeys<Key extends string, Schema extends MutationFa
           yieldValue = omitPrototype({ ...innerDefKey, ...queryOptions });
         }
       } else if ('contextMutations' in value) {
-        const innerDefKey = { ...(value.mutationKey ? { _def: key } : undefined) };
+        const innerDefKey = {
+          ...(value.mutationKey ? { _def: key } : undefined),
+        };
         const innerKey = [...key, ...(value.mutationKey ?? [])] as const;
 
-        const transformedSchema = transformSchema(value.contextMutations, innerKey);
+        const transformedSchema = transformSchema(
+          value.contextMutations,
+          innerKey,
+        );
 
         yieldValue = omitPrototype({
           _ctx: omitPrototype(Object.fromEntries(transformedSchema)),
@@ -139,7 +168,9 @@ export function createMutationKeys<Key extends string, Schema extends MutationFa
           ...innerDefKey,
         });
       } else {
-        const innerDefKey = { ...(value.mutationKey ? { _def: key } : undefined) };
+        const innerDefKey = {
+          ...(value.mutationKey ? { _def: key } : undefined),
+        };
         const innerKey = [...key, ...(value.mutationKey ?? [])] as const;
 
         yieldValue = omitPrototype({
@@ -149,6 +180,7 @@ export function createMutationKeys<Key extends string, Schema extends MutationFa
       }
 
       factoryMap.set(factoryKey, yieldValue);
+
       return factoryMap;
     }, new Map<$FactoryProperty, $Factory[$FactoryProperty]>());
   };
