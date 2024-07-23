@@ -13,7 +13,12 @@ import type {
 } from './create-mutation-keys.types';
 import type { AnyMutableOrReadonlyArray } from './types';
 
-type MergeInsertions<T> = T extends object ? { [K in keyof T]: MergeInsertions<T[K]> } : T;
+type Primitive = boolean | string | number | bigint | symbol | undefined | null;
+
+type MergeInsertions<T> =
+  T extends Primitive ? T
+  : T extends object ? { [K in keyof T]: MergeInsertions<T[K]> }
+  : T;
 
 type inferRecordMutationKeys<Target extends object> = {
   [P in Exclude<keyof Target, 'mutationFn'>]: Target[P] extends AnyMutableOrReadonlyArray ? Target[P]
