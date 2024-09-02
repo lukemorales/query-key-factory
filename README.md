@@ -156,7 +156,7 @@ export function useUpdateTodo() {
 ## 📝 Features
 
 ### Standardized keys
-All keys generated follow the @tanstack/query convention of being an [array at top level](https://tanstack.com/query/v4/docs/guides/query-keys), including [keys with serializable objects](https://tanstack.com/query/v4/docs/guides/query-keys#array-keys-with-variables):
+All keys generated follow the @tanstack/query convention of being an [array at top level](https://tanstack.com/query/v4/docs/framework/react/guides/query-keys), including [keys with serializable objects](https://tanstack.com/query/v4/docs/framework/react/guides/query-keys#array-keys-with-variables):
 
 ```ts
 export const todos = createQueryKeys('todos', {
