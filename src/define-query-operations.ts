@@ -1,3 +1,4 @@
+
 import type { InfiniteData } from '@tanstack/query-core';
 
 import type {
@@ -24,8 +25,8 @@ import type {
 
 type BaseQueryKeyShape = readonly [string, ...any[]];
 
-type BaseOperationsSchema<QueryKey extends AnyTuple> = {
-  $baseQueryKey: Readonly<QueryKey>;
+export type RootQueryBuilderSchema<QueryKey extends AnyTuple> = {
+  $root: Readonly<QueryKey>;
 };
 
 type MakeKey<
@@ -38,18 +39,18 @@ type UniqueOperation<Operation extends string, Operations> =
     `Operation "${Operation}" is already declared`
   : Operation;
 
-class OperationBuilder<
+class QueriesBuilder<
   BaseQueryKey extends BaseQueryKeyShape,
-  Operations extends AnyObject = BaseOperationsSchema<BaseQueryKey>,
+  Operations extends AnyObject = RootQueryBuilderSchema<BaseQueryKey>,
 > {
   protected operations: Operations;
 
-  constructor(private readonly $baseQueryKey: BaseQueryKey) {
-    const baseSchema: BaseOperationsSchema<BaseQueryKey> = {
-      $baseQueryKey: this.$baseQueryKey,
+  constructor(private readonly $root: BaseQueryKey) {
+    const rootSchema: RootQueryBuilderSchema<BaseQueryKey> = {
+      $root: this.$root,
     };
 
-    this.operations = baseSchema as never;
+    this.operations = rootSchema as never;
   }
 
   query<Operation extends string, Data = unknown, SelectData = Data>(
@@ -62,7 +63,7 @@ class OperationBuilder<
         MakeKey<BaseQueryKey, [Operation]>
       >
     >,
-  ): OperationBuilder<
+  ): QueriesBuilder<
     BaseQueryKey,
     Operations & {
       [Key in Operation]: QueryOptionsWithInitialData<
@@ -78,7 +79,7 @@ class OperationBuilder<
     options: OmitQueryKey<
       OptionsStruct<Data, SelectData, never, MakeKey<BaseQueryKey, [Operation]>>
     >,
-  ): OperationBuilder<
+  ): QueriesBuilder<
     BaseQueryKey,
     Operations & {
       [Key in Operation]: QueryOptionsWithoutInitialData<
@@ -90,7 +91,7 @@ class OperationBuilder<
   >;
 
   query(procedure: string, options: AnyObject) {
-    const generatedQueryKey = [...this.$baseQueryKey, procedure] as const;
+    const generatedQueryKey = [...this.$root, procedure] as const;
 
     options.queryKey = generatedQueryKey;
 
@@ -115,11 +116,11 @@ class OperationBuilder<
       QueryKey,
       MakeKey<BaseQueryKey, [Operation, ...QueryKey]>
     >,
-  ): OperationBuilder<
+  ): QueriesBuilder<
     BaseQueryKey,
     Operations & {
       [Pcd in Operation]: {
-        $baseQueryKey: MakeKey<BaseQueryKey, [Operation]>;
+        $root: MakeKey<BaseQueryKey, [Operation]>;
         (
           ...args: Args
         ): QueryOptionsWithInitialData<
@@ -147,11 +148,11 @@ class OperationBuilder<
       QueryKey,
       MakeKey<BaseQueryKey, [Operation, ...QueryKey]>
     >,
-  ): OperationBuilder<
+  ): QueriesBuilder<
     BaseQueryKey,
     Operations & {
       [Op in Operation]: {
-        $baseQueryKey: MakeKey<BaseQueryKey, [Operation]>;
+        $root: MakeKey<BaseQueryKey, [Operation]>;
         (
           ...args: Args
         ): QueryOptionsWithoutInitialData<
@@ -187,17 +188,17 @@ class OperationBuilder<
         QueryKey[0]
       >,
     ) => Context,
-  ): OperationBuilder<
+  ): QueriesBuilder<
     BaseQueryKey,
     Operations & {
       [Op in Operation]: {
-        $baseQueryKey: MakeKey<BaseQueryKey, [Operation]>;
+        $root: MakeKey<BaseQueryKey, [Operation]>;
         (...args: Args): QueryOptionsWithInitialData<
           Data,
           SelectData,
           MakeKey<BaseQueryKey, [Operation, ...QueryKey]>
         > & {
-          $ctx: Context extends OperationBuilder<any, infer ContextSchema> ?
+          $ctx: Context extends QueriesBuilder<any, infer ContextSchema> ?
             Prettify<ContextSchema>
           : never;
         };
@@ -229,17 +230,17 @@ class OperationBuilder<
         QueryKey[0]
       >,
     ) => Context,
-  ): OperationBuilder<
+  ): QueriesBuilder<
     BaseQueryKey,
     Operations & {
       [Op in Operation]: {
-        $baseQueryKey: MakeKey<BaseQueryKey, [Operation]>;
+        $root: MakeKey<BaseQueryKey, [Operation]>;
         (...args: Args): QueryOptionsWithoutInitialData<
           Data,
           SelectData,
           MakeKey<BaseQueryKey, [Operation, ...QueryKey]>
         > & {
-          $ctx: Context extends OperationBuilder<any, infer ContextSchema> ?
+          $ctx: Context extends QueriesBuilder<any, infer ContextSchema> ?
             Prettify<ContextSchema>
           : never;
         };
@@ -251,8 +252,8 @@ class OperationBuilder<
     procedure: string,
     options: (...args: any[]) => AnyObject,
     context?: (contextBuilder: any) => any,
-  ): OperationBuilder<BaseQueryKey, {}> {
-    const baseOperationQueryKey = [...this.$baseQueryKey, procedure] as const;
+  ): QueriesBuilder<BaseQueryKey, {}> {
+    const baseOperationQueryKey = [...this.$root, procedure] as const;
 
     const monkeyPatchedQueryOptions = (...args: AnyTuple) => {
       const innerOptions = options(...args);
@@ -272,43 +273,84 @@ class OperationBuilder<
       return innerOptions;
     };
 
-    monkeyPatchedQueryOptions.$baseQueryKey = baseOperationQueryKey;
+    monkeyPatchedQueryOptions.$root = baseOperationQueryKey;
 
     (this.operations as any)[procedure] = monkeyPatchedQueryOptions;
 
     return this as never;
   }
 
-  mutation<
-    Operation extends string,
-    Data = unknown,
-    Variables = void,
-    Context = unknown,
-  >(
+  mutation<Operation extends string>(
     procedure: UniqueOperation<Operation, keyof Operations>,
-    options: MutationOptionsStruct<Data, Variables, Context>,
-  ): OperationBuilder<
-    BaseQueryKey,
-    Operations & {
-      [Op in Operation]: MutationOptions<
-        Data,
-        Variables,
-        Context,
-        MakeKey<BaseQueryKey, [Operation]>
-      >;
-    }
-  > {
-    const baseOperationMutationKey = [
-      ...this.$baseQueryKey,
-      procedure,
-    ] as const;
+    context: (options: { mutate: any; keys: Operations }) => QueriesBuilder<
+      BaseQueryKey,
+      Operations & {
+        [Op in Operation]: MutationOptions<
+          Data,
+          Variables,
+          Context,
+          MakeKey<BaseQueryKey, [Operation]>
+        >;
+      },
+  ) {
+    const mutate = <Data = unknown, Variables = void, Context = unknown>(
+      procedure: UniqueOperation<Operation, keyof Operations>,
+      options: (
+        queryClient: Client,
+      ) => MutationOptionsStruct<Data, Variables, Context>,
+    ): QueriesBuilder<
+      BaseQueryKey,
+      Operations & {
+        [Op in Operation]: MutationOptions<
+          Data,
+          Variables,
+          Context,
+          MakeKey<BaseQueryKey, [Operation]>
+        >;
+      }
+    > => {
+      const baseOperationMutationKey = [...this.$root, procedure] as const;
 
-    (options as any).mutationKey = baseOperationMutationKey;
+      (options as any).mutationKey = baseOperationMutationKey;
 
-    (this.operations as any)[procedure] = options;
+      (this.operations as any)[procedure] = options;
 
-    return this as never;
+      return this as never;
+    };
+
+    return context({ mutate, keys: this.operations });
   }
+
+  // mutation<
+  //   Operation extends string,
+  //   Data = unknown,
+  //   Variables = void,
+  //   Context = unknown,
+  //   Client extends QueryClient = QueryClient,
+  // >(
+  //   procedure: UniqueOperation<Operation, keyof Operations>,
+  //   options: (
+  //     queryClient: Client,
+  //   ) => MutationOptionsStruct<Data, Variables, Context>,
+  // ): QueriesBuilder<
+  //   BaseQueryKey,
+  //   Operations & {
+  //     [Op in Operation]: MutationOptions<
+  //       Data,
+  //       Variables,
+  //       Context,
+  //       MakeKey<BaseQueryKey, [Operation]>
+  //     >;
+  //   }
+  // > {
+  //   const baseOperationMutationKey = [...this.$root, procedure] as const;
+
+  //   (options as any).mutationKey = baseOperationMutationKey;
+
+  //   (this.operations as any)[procedure] = options;
+
+  //   return this as never;
+  // }
 
   infiniteQuery<
     Operation extends string,
@@ -326,7 +368,7 @@ class OperationBuilder<
         PageParam
       >
     >,
-  ): OperationBuilder<
+  ): QueriesBuilder<
     BaseQueryKey,
     Operations & {
       [Op in Operation]: InfiniteQueryOptionsWithInitialData<
@@ -354,7 +396,7 @@ class OperationBuilder<
         PageParam
       >
     >,
-  ): OperationBuilder<
+  ): QueriesBuilder<
     BaseQueryKey,
     Operations & {
       [Op in Operation]: InfiniteQueryOptionsWithoutInitialData<
@@ -369,8 +411,8 @@ class OperationBuilder<
   infiniteQuery(
     procedure: string,
     options: AnyObject,
-  ): OperationBuilder<BaseQueryKey, any> {
-    const baseOperationQueryKey = [...this.$baseQueryKey, procedure] as const;
+  ): QueriesBuilder<BaseQueryKey, any> {
+    const baseOperationQueryKey = [...this.$root, procedure] as const;
     options.queryKey = baseOperationQueryKey;
 
     (this.operations as any)[procedure] = options;
@@ -396,7 +438,7 @@ class OperationBuilder<
       MakeKey<BaseQueryKey, [Operation, ...QueryKey]>,
       PageParam
     >,
-  ): OperationBuilder<
+  ): QueriesBuilder<
     BaseQueryKey,
     Operations & {
       [Op in Operation]: (
@@ -428,7 +470,7 @@ class OperationBuilder<
       MakeKey<BaseQueryKey, [Operation, ...QueryKey]>,
       PageParam
     >,
-  ): OperationBuilder<
+  ): QueriesBuilder<
     BaseQueryKey,
     Prettify<
       Operations & {
@@ -447,8 +489,8 @@ class OperationBuilder<
   infiniteQueryWithArgs(
     procedure: string,
     options: (...args: any[]) => AnyObject,
-  ): OperationBuilder<BaseQueryKey, any> {
-    const baseOperationQueryKey = [...this.$baseQueryKey, procedure] as const;
+  ): QueriesBuilder<BaseQueryKey, any> {
+    const baseOperationQueryKey = [...this.$root, procedure] as const;
 
     const monkeyPatchedQueryOptions = (...args: AnyTuple) => {
       const innerOptions = options(...args);
@@ -466,11 +508,11 @@ class OperationBuilder<
   }
 }
 
-class PrivateOperationBuilder<
+class $QueriesBuilder<
   BaseQueryKey extends BaseQueryKeyShape,
   Schema extends AnyObject,
-> extends OperationBuilder<BaseQueryKey, Schema> {
-  getOperations() {
+> extends QueriesBuilder<BaseQueryKey, Schema> {
+  getQueries() {
     return this.operations;
   }
 }
@@ -479,7 +521,7 @@ class ContextOperationBuilder<
   BaseQueryKey extends BaseQueryKeyShape,
   Schema extends AnyObject,
   ContextArgs extends AnyObject,
-> extends OperationBuilder<BaseQueryKey, Schema> {
+> extends QueriesBuilder<BaseQueryKey, Schema> {
   readonly args: ContextArgs;
 
   constructor(rootKey: BaseQueryKey, args: ContextArgs) {
@@ -500,25 +542,25 @@ class PrivateContextOperationBuilder<
   }
 }
 
-export function defineQueryOperations<Id extends string>(
+export function defineQueries<Id extends string>(
   id: Id,
-): Prettify<BaseOperationsSchema<[Id]>>;
-export function defineQueryOperations<Id extends string, Operations>(
+): Prettify<RootQueryBuilderSchema<[Id]>>;
+export function defineQueries<Id extends string, Queries>(
   id: Id,
-  define: (operations: OperationBuilder<readonly [Id]>) => Operations,
-): Operations extends OperationBuilder<infer _, infer Schema> ? Prettify<Schema>
+  define: (operations: QueriesBuilder<readonly [Id]>) => Queries,
+): Queries extends QueriesBuilder<infer _, infer Schema> ? Prettify<Schema>
 : never;
-export function defineQueryOperations(
+export function defineQueries(
   id: string,
   define?: (
-    operations: OperationBuilder<readonly [string], any>,
-  ) => OperationBuilder<any, any>,
+    operations: QueriesBuilder<readonly [string], any>,
+  ) => QueriesBuilder<any, any>,
 ): AnyObject {
-  const builder = new PrivateOperationBuilder([id] as const);
+  const builder = new $QueriesBuilder([id] as const);
 
   if (!define) {
-    return builder.getOperations();
+    return builder.getQueries();
   }
 
-  return (define(builder) as PrivateOperationBuilder<any, any>).getOperations();
+  return (define(builder) as $QueriesBuilder<any, any>).getQueries();
 }

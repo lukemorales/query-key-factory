@@ -18,7 +18,7 @@ type StoreFromMergedQueryKeys<
 
 /**
  * @deprecated This function will be removed in the next major version.
- * Please use `mergeQueryFactories` with `defineQueryOperations` instead.
+ * Please use `mergeQueryOperations` with `defineQueryOperations` instead.
  */
 export function mergeQueryKeys<
   QueryKeyFactoryResults extends Array<

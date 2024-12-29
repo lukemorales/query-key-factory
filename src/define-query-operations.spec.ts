@@ -518,9 +518,13 @@ describe('defineQueryOperations', () => {
       }
 
       const result = defineQueryOperations('users', (operations) =>
-        operations.mutation('create', {
+        operations.mutation('create', (queryClient) => ({
           mutationFn: (_: Options) => Promise.resolve(true),
-        }),
+          onMutate(variables: Options) {
+            console.log(variables);
+          },
+          onSuccess(data: boolean, variables, context) {},
+        })),
       );
 
       expect(result).toEqual({

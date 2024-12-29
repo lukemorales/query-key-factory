@@ -16,7 +16,7 @@ export type QueryKeyStore<StoreSchema extends QueryKeyStoreSchema> = {
 
 /**
  * @deprecated This function will be removed in the next major version.
- * Please use `mergeQueryFactories` with `defineQueryOperations` instead.
+ * Please use `mergeQueryOperations` with `defineQueryOperations` instead.
  */
 export function createQueryKeyStore<StoreSchema extends QueryKeyStoreSchema>(
   schema: StoreSchema,

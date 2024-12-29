@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-expressions */
-import { defineQueryOperations } from './define-query-operations';
+
+import { defineQueries } from './define-query-operations';
 
 declare function getCurrentUser(): Promise<User>;
 
@@ -20,49 +21,57 @@ interface User {
   age?: number;
 }
 
-const users = defineQueryOperations('users', (schema) =>
-  schema
-    .query('me', {
-      queryFn: getCurrentUser,
-    })
-    .queryWithArgs('profile', (userId: string) => ({
-      queryKey: [{ userId }],
-      queryFn: (ctx) => getUser(ctx.queryKey[2].userId),
-    }))
-    .queryWithArgs(
-      'profileWithContext',
-      (userId: string) => ({
+const users = defineQueries(
+  'users',
+  (schema) =>
+    schema
+      .query('me', {
+        queryFn: getCurrentUser,
+      })
+      .queryWithArgs('profile', (userId: string) => ({
         queryKey: [{ userId }],
         queryFn: (ctx) => getUser(ctx.queryKey[2].userId),
-      }),
-      (context) =>
-        context
-          .query('todos', {
-            queryFn: async ({ queryKey }) => [queryKey[2].userId],
-          })
-          .queryWithArgs('todo', (todoId: string) => ({
-            // eslint-disable-next-line @tanstack/query/exhaustive-deps
-            queryKey: [{ todoId }],
-            queryFn: (_) => Promise.resolve({ id: context.args.userId }),
-          })),
-    )
-    .infiniteQuery('list', {
-      queryFn: (ctx) => getPaginatedUsers(ctx.pageParam),
-      getNextPageParam: ({ metadata }) => metadata.before,
-      initialPageParam: null as string | null,
-    })
-    .mutation('create', {
-      mutationFn: createUser,
-    }),
+      }))
+      .queryWithArgs(
+        'profileWithContext',
+        (userId: string) => ({
+          queryKey: [{ userId }],
+          queryFn: (ctx) => getUser(ctx.queryKey[2].userId),
+        }),
+        (context) =>
+          context
+            .query('todos', {
+              queryFn: async ({ queryKey }) => [queryKey[2].userId],
+            })
+            .queryWithArgs('todo', (todoId: string) => ({
+              // eslint-disable-next-line @tanstack/query/exhaustive-deps
+              queryKey: [{ todoId }],
+              queryFn: (_) => Promise.resolve({ id: context.args.userId }),
+            })),
+      )
+      .infiniteQuery('list', {
+        queryFn: (ctx) => getPaginatedUsers(ctx.pageParam),
+        getNextPageParam: ({ metadata }) => metadata.before,
+        initialPageParam: null as string | null,
+      })
+      .mutation(({ define, operations }) => {}),
+  // .mutation('create', (queryClient: QueryClient) => ({
+  //   mutationFn: createUser,
+  //   onSuccess: (data, variables, context) => {
+  //     invalidateQueries('users');
+  //   },
+  // })),
 );
 
-users.me.queryKey; // ?
+users.$root;
+//      ^?
+users.me.queryKey;
 //            ^?
-users.profileWithContext('user_01').$ctx.todo('todo_01').queryKey; // ?
+users.profileWithContext('user_01').$ctx.todo('todo_01').queryKey;
 //                                                          ^?
 
 users.list.queryKey;
 //              ^?
 
-users.create.mutationKey; // ?
+users.create.mutationKey;
 //                ^?
