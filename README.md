@@ -371,3 +371,22 @@ export function useTodos(filters: TodoFilters) {
   });
 };
 ```
+
+
+#### Typed helpers for QueryOptions and QueryData
+Use typed query options with precision:
+
+```ts
+import type { TypedQueryData, TypedUseQueryOptions } from "@lukemorales/query-key-factory";
+
+type TodosQueryData = TypedQueryData<typeof queries.todos.list>
+
+type TodosQueryOptions<T = TodosQueryData> = TypedUseQueryOptions<typeof queries.todos.list, T>
+
+export function useTodos<T = TodosQueryData>(filters: TodoFilters, options?: TodosQueryOptions<T>) {
+  return useQuery({
+    ...options,
+    ...queries.todos.list(filters)
+  });
+};
+```

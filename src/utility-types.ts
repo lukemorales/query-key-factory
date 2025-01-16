@@ -57,12 +57,17 @@ type LooseQueryOptionsStructGenerator = (...args: any[]) => LooseQueryOptionsStr
 
 export type TypedUseQueryOptions<
   Options extends LooseQueryOptionsStruct | LooseQueryOptionsStructGenerator,
-  Data = Options extends LooseQueryOptionsStructGenerator ? Awaited<ReturnType<ReturnType<Options>['queryFn']>>
-  : Options extends LooseQueryOptionsStruct ? Awaited<ReturnType<Options['queryFn']>>
-  : never,
+  Data = TypedQueryData<Options>,
 > =
   Options extends LooseQueryOptionsStructGenerator ?
     UseQueryOptions<Awaited<ReturnType<ReturnType<Options>['queryFn']>>, unknown, Data, ReturnType<Options>['queryKey']>
   : Options extends LooseQueryOptionsStruct ?
     UseQueryOptions<Awaited<ReturnType<Options['queryFn']>>, unknown, Data, Options['queryKey']>
   : never;
+
+export type TypedQueryData<
+  Options extends LooseQueryOptionsStruct | LooseQueryOptionsStructGenerator,
+  Data = Options extends LooseQueryOptionsStructGenerator ? Awaited<ReturnType<ReturnType<Options>['queryFn']>>
+  : Options extends LooseQueryOptionsStruct ? Awaited<ReturnType<Options['queryFn']>>
+  : never,
+> = Data;
