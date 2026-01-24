@@ -3,7 +3,7 @@ import type { QueryFactorySchema, QueryKeyFactoryResult } from './create-query-k
 import type { DefinitionKey } from './types';
 import { omitPrototype } from './internals';
 
-type QueryKeyStoreSchema = Record<string, null | QueryFactorySchema>;
+export type QueryKeyStoreSchema = Record<string, null | QueryFactorySchema>;
 
 export type QueryKeyStore<StoreSchema extends QueryKeyStoreSchema> = {
   [P in keyof StoreSchema & string]: StoreSchema[P] extends QueryFactorySchema ?
